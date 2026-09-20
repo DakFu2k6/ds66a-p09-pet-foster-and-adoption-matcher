@@ -1,10 +1,11 @@
 ## Project Information
 
-- Project ID: P01
-- Project Name: Yummy Catering Event Management System
-- Class: OOP Java – K68A
+- Project ID: P09
+- Project Name: Pet Foster and Adoption Matcher
+- Class: OOP Java – DS66A
+- Group: 03
 
 ## Members
-- Nguyễn Văn A – Leader
-- Trần Thị B – Backend
-- Lê Văn C – GUI
+- Nguyễn Thành Được 
+- Trần Đinh Quang Anh
+- Nguyễn Thế Hợp
