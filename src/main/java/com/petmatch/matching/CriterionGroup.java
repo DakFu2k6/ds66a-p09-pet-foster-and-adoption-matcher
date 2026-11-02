@@ -1,31 +1,58 @@
 package com.petmatch.matching;
 
-import com.petmatch.model.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class CriterionGroup {
-    private final List<MatchCriterion> criteria;
-    private final MatchOperator operator;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.MatchOperator;
+import com.petmatch.model.Pet;
 
-    public CriterionGroup(List<MatchCriterion> criteria, MatchOperator operator) {
-        this.criteria = List.copyOf(criteria);
+public class CriterionGroup implements MatchCriterion {
+    private final List<MatchCriterion> criteria = new ArrayList<>();
+    private MatchOperator operator = MatchOperator.AND;
+
+    public CriterionGroup() {}
+
+    public CriterionGroup(MatchOperator operator) {
         this.operator = operator;
-        if (criteria.isEmpty())
-            throw new IllegalArgumentException("At least one criterion is required.");
     }
 
-    public List<CriterionResult> evaluate(Pet pet, FosterFamily family) {
-        return criteria.stream().map(c -> c.evaluate(pet, family)).toList();
+    public void addCriterion(MatchCriterion criterion) {
+        this.criteria.add(criterion);
     }
 
-    public boolean isPassed(List<CriterionResult> results) {
-        if (results == null || results.isEmpty())
-            return false;
-        return operator == MatchOperator.AND ? results.stream().allMatch(CriterionResult::passed)
-                : results.stream().anyMatch(CriterionResult::passed);
+    public void setOperator(MatchOperator operator) {
+        this.operator = operator;
     }
 
-    public MatchOperator getOperator() {
-        return operator;
+    @Override
+    public CriterionResult evaluate(Pet pet, FosterFamily family) {
+        if (criteria.isEmpty()) {
+            return CriterionResult.pass("Không có tiêu chí nào được thiết lập.");
+        }
+
+        StringBuilder details = new StringBuilder();
+        boolean overallResult = (operator == MatchOperator.AND);
+
+        for (MatchCriterion criterion : criteria) {
+            CriterionResult result = criterion.evaluate(pet, family);
+            details.append("- ").append(result.getReason()).append("\n");
+
+            if (operator == MatchOperator.AND) {
+                if (!result.isSatisfied()) {
+                    overallResult = false;
+                }
+            } else if (operator == MatchOperator.OR) {
+                if (result.isSatisfied()) {
+                    overallResult = true;
+                }
+            }
+        }
+
+        if (overallResult) {
+            return CriterionResult.pass("ĐÁNH GIÁ CHUNG: ĐẠT (Logic " + operator + ")\n" + details.toString());
+        } else {
+            return CriterionResult.fail("ĐÁNH GIÁ CHUNG: KHÔNG ĐẠT (Logic " + operator + ")\n" + details.toString());
+        }
     }
 }
