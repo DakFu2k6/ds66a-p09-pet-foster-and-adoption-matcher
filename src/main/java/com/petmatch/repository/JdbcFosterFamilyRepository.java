@@ -16,7 +16,7 @@ import com.petmatch.model.HousingType;
 
 public class JdbcFosterFamilyRepository implements FosterFamilyRepository {
 
-    private FosterFamily map(ResultSet r) throws SQLException {
+    private FosterFamily mapRow(ResultSet r) throws SQLException {
         return new FosterFamily(
             r.getLong("family_id"), 
             r.getString("family_name"), 
@@ -32,38 +32,50 @@ public class JdbcFosterFamilyRepository implements FosterFamilyRepository {
         );
     }
 
+    @Override
     public List<FosterFamily> findAll() {
         String q = "SELECT * FROM foster_families ORDER BY family_id DESC";
+        List<FosterFamily> list = new ArrayList<>();
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q);
              ResultSet r = p.executeQuery()) {
-            List<FosterFamily> x = new ArrayList<>();
+            
             while (r.next()) {
-                x.add(map(r));
+                list.add(mapRow(r));
             }
-            return x;
         } catch (SQLException e) {
-            throw new RuntimeException("Could not load families", e);
+            throw new RuntimeException("Không thể tải danh sách gia đình nhận nuôi", e);
         }
+        return list;
     }
 
+    @Override
     public Optional<FosterFamily> findById(long id) {
         String q = "SELECT * FROM foster_families WHERE family_id = ?";
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q)) {
+            
             p.setLong(1, id);
             try (ResultSet r = p.executeQuery()) {
-                return r.next() ? Optional.of(map(r)) : Optional.empty();
+                if (r.next()) {
+                    return Optional.of(mapRow(r));
+                }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Could not find family", e);
+            throw new RuntimeException("Không tìm thấy gia đình nhận nuôi với mã số: " + id, e);
         }
+        return Optional.empty();
     }
 
+    @Override
     public FosterFamily save(FosterFamily f) {
         String q = "INSERT INTO foster_families(family_name, contact_name, phone, housing_type, experience_level, capacity, active_pet_count, has_yard, has_children, is_active) VALUES(?,?,?,?,?,?,?,?,?,?)";
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
+            
             p.setString(1, f.getFamilyName());
             p.setString(2, f.getContactName());
             p.setString(3, f.getPhone());
@@ -77,23 +89,24 @@ public class JdbcFosterFamilyRepository implements FosterFamilyRepository {
             p.executeUpdate();
             
             try (ResultSet r = p.getGeneratedKeys()) {
-                if (!r.next())
-                    throw new SQLException("No generated id returned.");
-                return new FosterFamily(
-                    r.getLong(1), f.getFamilyName(), f.getContactName(), f.getPhone(),
-                    f.getHousingType(), f.getExperienceLevel(), f.getCapacity(), f.getActivePetCount(),
-                    f.isHasYard(), f.isHasChildren(), f.isActive()
-                );
+                if (r.next()) {
+                    f.setId(r.getLong(1));
+                    return f;
+                }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Could not save family", e);
+            throw new RuntimeException("Không thể lưu thông tin gia đình nhận nuôi", e);
         }
+        return null;
     }
 
+    @Override
     public void update(FosterFamily f) {
         String q = "UPDATE foster_families SET family_name=?, contact_name=?, phone=?, housing_type=?, experience_level=?, capacity=?, active_pet_count=?, has_yard=?, has_children=?, is_active=? WHERE family_id=?";
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q)) {
+            
             p.setString(1, f.getFamilyName());
             p.setString(2, f.getContactName());
             p.setString(3, f.getPhone());
@@ -108,7 +121,7 @@ public class JdbcFosterFamilyRepository implements FosterFamilyRepository {
             
             p.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Could not update family", e);
+            throw new RuntimeException("Không thể cập nhật thông tin gia đình nhận nuôi", e);
         }
     }
 }
