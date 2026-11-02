@@ -1,86 +1,111 @@
 package com.petmatch.repository;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.petmatch.config.DatabaseConnection;
-import java.sql.*;
 
 public class JdbcPlacementRepository implements PlacementRepository {
+
+    @Override
     public void createPlacement(long applicationId, long petId, long familyId) {
-        String lockPet = "SELECT status,housing_requirement,special_care_required FROM pets WHERE pet_id=? FOR UPDATE";
-        String lockFamily = "SELECT capacity,active_pet_count,is_active,housing_type,experience_level,has_yard FROM foster_families WHERE family_id=? FOR UPDATE";
+        String sqlCheckApp = "SELECT status FROM applications WHERE application_id = ? AND pet_id = ? AND family_id = ? FOR UPDATE";
+        String sqlCheckPet = "SELECT status FROM pets WHERE pet_id = ? FOR UPDATE";
+        String sqlCheckFamily = "SELECT is_active, active_pet_count, capacity FROM foster_families WHERE family_id = ? FOR UPDATE";
+        
+        String sqlInsertPlacement = "INSERT INTO placements(application_id, pet_id, family_id) VALUES(?, ?, ?)";
+        String sqlUpdatePetStatus = "UPDATE pets SET status = 'PLACED' WHERE pet_id = ?";
+        String sqlUpdateFamilyCount = "UPDATE foster_families SET active_pet_count = active_pet_count + 1 WHERE family_id = ?";
+        String sqlUpdateAppPlaced = "UPDATE applications SET status = 'PLACED' WHERE application_id = ?";
+        String sqlRejectOtherApps = "UPDATE applications SET status = 'REJECTED' WHERE pet_id = ? AND application_id <> ? AND status IN ('PENDING', 'APPROVED')";
+
         try (Connection c = DatabaseConnection.getConnection()) {
-            c.setAutoCommit(false);
+            c.setAutoCommit(false); 
+
             try {
-                String housingRequirement;
-                boolean specialCare;
-                try (PreparedStatement p = c.prepareStatement(
-                        "SELECT pet_id,family_id,status FROM applications WHERE application_id=? FOR UPDATE")) {
+                try (PreparedStatement p = c.prepareStatement(sqlCheckApp)) {
                     p.setLong(1, applicationId);
+                    p.setLong(2, petId);
+                    p.setLong(3, familyId);
                     try (ResultSet rs = p.executeQuery()) {
-                        if (!rs.next() || rs.getLong(1) != petId || rs.getLong(2) != familyId
-                                || !java.util.Set.of("PENDING", "APPROVED").contains(rs.getString(3)))
-                            throw new SQLException("Application identity or state is invalid.");
+                        if (!rs.next()) {
+                            throw new SQLException("Không tìm thấy đơn đăng ký hoặc thông tin liên kết không khớp.");
+                        }
+                        String status = rs.getString("status");
+                        if (!"PENDING".equals(status) && !"APPROVED".equals(status)) {
+                            throw new SQLException("Trạng thái đơn đăng ký không hợp lệ để nhận nuôi.");
+                        }
                     }
                 }
-                try (PreparedStatement p = c.prepareStatement(lockPet)) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlCheckPet)) {
                     p.setLong(1, petId);
-                    try (ResultSet r = p.executeQuery()) {
-                        if (!r.next() || !"AVAILABLE".equals(r.getString(1)))
-                            throw new SQLException("Pet is not available.");
-                        housingRequirement = r.getString("housing_requirement");
-                        specialCare = r.getBoolean("special_care_required");
+                    try (ResultSet rs = p.executeQuery()) {
+                        if (!rs.next() || !"AVAILABLE".equals(rs.getString("status"))) {
+                            throw new SQLException("Thú cưng này hiện không còn khả dụng.");
+                        }
                     }
                 }
-                try (PreparedStatement p = c.prepareStatement(lockFamily)) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlCheckFamily)) {
                     p.setLong(1, familyId);
-                    try (ResultSet r = p.executeQuery()) {
-                        if (!r.next() || !r.getBoolean("is_active")
-                                || r.getInt("active_pet_count") >= r.getInt("capacity"))
-                            throw new SQLException("Family is inactive or at capacity.");
-                        String housing = r.getString("housing_type");
-                        boolean compatible = "ANY".equals(housingRequirement)
-                                || "HOUSE".equals(housingRequirement) && !"APARTMENT".equals(housing)
-                                || "APARTMENT".equals(housingRequirement) && "APARTMENT".equals(housing)
-                                || "YARD".equals(housingRequirement) && r.getBoolean("has_yard");
-                        if (!compatible || specialCare && "BEGINNER".equals(r.getString("experience_level")))
-                            throw new SQLException("Matching changed: housing or experience is incompatible.");
+                    try (ResultSet rs = p.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new SQLException("Không tìm thấy thông tin gia đình nhận nuôi.");
+                        }
+                        boolean isActive = rs.getBoolean("is_active");
+                        int activeCount = rs.getInt("active_pet_count");
+                        int capacity = rs.getInt("capacity");
+
+                        if (!isActive) {
+                            throw new SQLException("Gia đình nhận nuôi hiện đang tạm ngưng hoạt động.");
+                        }
+                        if (activeCount >= capacity) {
+                            throw new SQLException("Gia đình nhận nuôi đã đạt giới hạn số lượng thú cưng.");
+                        }
                     }
                 }
-                try (PreparedStatement p = c
-                        .prepareStatement("INSERT INTO placements(application_id,pet_id,family_id) VALUES(?,?,?)")) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlInsertPlacement)) {
                     p.setLong(1, applicationId);
                     p.setLong(2, petId);
                     p.setLong(3, familyId);
                     p.executeUpdate();
                 }
-                try (PreparedStatement p = c.prepareStatement("UPDATE pets SET status='PLACED' WHERE pet_id=?")) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlUpdatePetStatus)) {
                     p.setLong(1, petId);
                     p.executeUpdate();
                 }
-                try (PreparedStatement p = c.prepareStatement(
-                        "UPDATE foster_families SET active_pet_count=active_pet_count+1 WHERE family_id=?")) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlUpdateFamilyCount)) {
                     p.setLong(1, familyId);
                     p.executeUpdate();
                 }
-                try (PreparedStatement p = c
-                        .prepareStatement("UPDATE applications SET status='PLACED' WHERE application_id=?")) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlUpdateAppPlaced)) {
                     p.setLong(1, applicationId);
                     p.executeUpdate();
                 }
-                try (PreparedStatement p = c.prepareStatement(
-                        "UPDATE applications SET status='REJECTED' WHERE pet_id=? AND application_id<>? AND status IN ('PENDING','APPROVED')")) {
+
+                try (PreparedStatement p = c.prepareStatement(sqlRejectOtherApps)) {
                     p.setLong(1, petId);
                     p.setLong(2, applicationId);
                     p.executeUpdate();
                 }
-                c.commit();
-            } catch (Exception ex) {
-                c.rollback();
+
+                c.commit(); 
+            } catch (SQLException ex) {
+                c.rollback(); 
                 throw ex;
             } finally {
-                c.setAutoCommit(true);
+                c.setAutoCommit(true); 
             }
+
         } catch (SQLException e) {
-            throw new RuntimeException("Placement transaction failed: " + e.getMessage(), e);
+            throw new RuntimeException("Giao dịch ghép nối thất bại: " + e.getMessage(), e);
         }
     }
 }
