@@ -1,4 +1,4 @@
-package main.java.com.petmatch.model;
+package com.petmatch.model;
 
 public class CareProfile {
     private long id;

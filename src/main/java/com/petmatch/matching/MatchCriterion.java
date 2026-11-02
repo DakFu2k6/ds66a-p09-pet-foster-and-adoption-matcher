@@ -1,7 +1,7 @@
-package main.java.com.petmatch.matching;
+package com.petmatch.matching;
 
-import main.java.com.petmatch.model.Pet;
-import main.java.com.petmatch.model.FosterFamily;
+import com.petmatch.model.Pet;
+import com.petmatch.model.FosterFamily;
 
 public interface MatchCriterion {
     String getName();

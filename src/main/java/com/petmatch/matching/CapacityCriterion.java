@@ -1,6 +1,6 @@
-package main.java.com.petmatch.matching;
+package com.petmatch.matching;
 
-import main.java.com.petmatch.model.*;
+import com.petmatch.model.*;
 
 public class CapacityCriterion implements MatchCriterion {
     public String getName() {

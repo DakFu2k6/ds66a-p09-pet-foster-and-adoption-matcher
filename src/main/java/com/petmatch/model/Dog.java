@@ -1,4 +1,4 @@
-package main.java.com.petmatch.model;
+package com.petmatch.model;
 
 public class Dog extends Pet {
     public Dog(long id, String name, String breed, int ageMonths, String healthStatus,

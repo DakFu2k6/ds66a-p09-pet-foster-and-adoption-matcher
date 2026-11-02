@@ -1,8 +1,8 @@
-package main.java.com.petmatch.service;
+package com.petmatch.service;
 
-import main.java.com.petmatch.exception.InvalidApplicationException;
-import main.java.com.petmatch.model.*;
-import main.java.com.petmatch.repository.*;
+import com.petmatch.exception.InvalidApplicationException;
+import com.petmatch.model.*;
+import com.petmatch.repository.*;
 import java.util.*;
 
 public class ApplicationService {

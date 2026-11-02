@@ -1,4 +1,4 @@
-package main.java.com.petmatch.model;
+package com.petmatch.model;
 
 public class FosterFamily {
     private long id;

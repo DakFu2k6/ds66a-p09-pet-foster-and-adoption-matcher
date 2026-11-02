@@ -1,4 +1,4 @@
-package main.java.com.petmatch.exception;
+package com.petmatch.exception;
 
 public class InvalidPetException extends RuntimeException {
     public InvalidPetException(String message) {

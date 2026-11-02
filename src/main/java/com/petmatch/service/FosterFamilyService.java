@@ -1,7 +1,7 @@
-package main.java.com.petmatch.service;
+package com.petmatch.service;
 
-import main.java.com.petmatch.model.*;
-import main.java.com.petmatch.repository.FosterFamilyRepository;
+import com.petmatch.model.*;
+import com.petmatch.repository.FosterFamilyRepository;
 import java.util.*;
 
 public class FosterFamilyService {

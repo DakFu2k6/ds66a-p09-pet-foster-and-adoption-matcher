@@ -1,4 +1,4 @@
-package main.java.com.petmatch.exception;
+package com.petmatch.exception;
 
 public class InvalidApplicationException extends RuntimeException {
     public InvalidApplicationException(String message) {

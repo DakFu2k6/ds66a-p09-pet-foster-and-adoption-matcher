@@ -1,3 +1,5 @@
-package main.java.com.petmatch.model;
+package com.petmatch.model;
 
-public enum PetStatus { AVAILABLE, RESERVED, PLACED, UNAVAILABLE }
+public enum PetStatus {
+    AVAILABLE, RESERVED, PLACED, UNAVAILABLE
+}

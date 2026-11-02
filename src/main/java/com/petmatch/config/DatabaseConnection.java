@@ -1,4 +1,4 @@
-package main.java.com.petmatch.config;
+package com.petmatch.config;
 
 import java.io.InputStream;
 import java.sql.Connection;

@@ -1,7 +1,7 @@
-package main.java.com.petmatch.ui;
+package com.petmatch.ui;
 
-import main.java.com.petmatch.repository.*;
-import main.java.com.petmatch.service.*;
+import com.petmatch.repository.*;
+import com.petmatch.service.*;
 import javax.swing.*;
 import java.awt.*;
 

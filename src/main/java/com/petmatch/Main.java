@@ -1,7 +1,7 @@
-package main.java.com.petmatch;
+package com.petmatch;
 
-import main.java.com.petmatch.config.DatabaseConnection;
-import main.java.com.petmatch.ui.MainFrame;
+import com.petmatch.config.DatabaseConnection;
+import com.petmatch.ui.MainFrame;
 import javax.swing.*;
 
 public class Main {
@@ -12,7 +12,6 @@ public class Main {
             } catch (Exception ignored) {
             }
             try {
-                // Fail fast when the database is not configured or reachable.
                 DatabaseConnection.getConnection().close();
                 new MainFrame().setVisible(true);
             } catch (Exception ex) {

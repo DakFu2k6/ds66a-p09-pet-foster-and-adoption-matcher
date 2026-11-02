@@ -1,6 +1,6 @@
-package main.java.com.petmatch.repository;
+package com.petmatch.repository;
 
-import main.java.com.petmatch.config.DatabaseConnection;
+import com.petmatch.config.DatabaseConnection;
 import java.sql.*;
 
 public class JdbcPlacementRepository implements PlacementRepository {

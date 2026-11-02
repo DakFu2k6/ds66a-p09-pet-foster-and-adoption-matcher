@@ -1,4 +1,4 @@
-package main.java.com.petmatch.exception;
+package com.petmatch.exception;
 
 public class PlacementRejectedException extends RuntimeException {
     public PlacementRejectedException(String message) {

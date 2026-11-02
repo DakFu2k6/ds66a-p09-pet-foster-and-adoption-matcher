@@ -1,7 +1,7 @@
-package main.java.com.petmatch.service;
+package com.petmatch.service;
 
-import main.java.com.petmatch.matching.*;
-import main.java.com.petmatch.model.*;
+import com.petmatch.matching.*;
+import com.petmatch.model.*;
 import java.util.*;
 
 public class MatchingService {

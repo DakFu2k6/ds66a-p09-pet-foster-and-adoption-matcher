@@ -1,9 +1,9 @@
-package main.java.com.petmatch.service;
+package com.petmatch.service;
 
-import main.java.com.petmatch.exception.PlacementRejectedException;
-import main.java.com.petmatch.model.*;
-import main.java.com.petmatch.matching.CriterionResult;
-import main.java.com.petmatch.repository.*;
+import com.petmatch.exception.PlacementRejectedException;
+import com.petmatch.model.*;
+import com.petmatch.matching.CriterionResult;
+import com.petmatch.repository.*;
 import java.util.*;
 
 public class PlacementService {

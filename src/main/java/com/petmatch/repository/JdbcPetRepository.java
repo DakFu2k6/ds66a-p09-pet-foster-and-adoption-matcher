@@ -1,7 +1,7 @@
-package main.java.com.petmatch.repository;
+package com.petmatch.repository;
 
-import main.java.com.petmatch.config.DatabaseConnection;
-import main.java.com.petmatch.model.*;
+import com.petmatch.config.DatabaseConnection;
+import com.petmatch.model.*;
 import java.sql.*;
 import java.util.*;
 

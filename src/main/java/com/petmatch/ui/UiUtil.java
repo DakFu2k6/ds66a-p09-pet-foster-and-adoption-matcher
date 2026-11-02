@@ -1,4 +1,4 @@
-package main.java.com.petmatch.ui;
+package com.petmatch.ui;
 
 import javax.swing.*;
 import java.awt.*;

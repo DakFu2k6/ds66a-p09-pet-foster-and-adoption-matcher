@@ -1,8 +1,8 @@
-package main.java.com.petmatch.ui;
+package com.petmatch.ui;
 
-import main.java.com.petmatch.model.*;
-import main.java.com.petmatch.repository.*;
-import main.java.com.petmatch.service.ApplicationService;
+import com.petmatch.model.*;
+import com.petmatch.repository.*;
+import com.petmatch.service.ApplicationService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
