@@ -1,44 +1,66 @@
 package com.petmatch.service;
 
 import com.petmatch.exception.PlacementRejectedException;
-import com.petmatch.model.*;
-import com.petmatch.matching.CriterionResult;
-import com.petmatch.repository.*;
-import java.util.*;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.Pet;
+import com.petmatch.model.PetStatus;
+import com.petmatch.model.Placement;
+import com.petmatch.repository.FosterFamilyRepository;
+import com.petmatch.repository.PetRepository;
+import com.petmatch.repository.PlacementRepository;
+
+import java.time.LocalDateTime;
 
 public class PlacementService {
-    private final PlacementRepository placements;
-    private final ApplicationRepository applications;
-    private final PetRepository pets;
-    private final FosterFamilyRepository families;
-    private final MatchingService matching;
 
-    public PlacementService(PlacementRepository p, ApplicationRepository a, PetRepository pets,
-            FosterFamilyRepository f, MatchingService m) {
-        placements = p;
-        applications = a;
-        this.pets = pets;
-        families = f;
-        matching = m;
+    private final PlacementRepository placementRepository;
+    private final PetRepository petRepository;
+    private final FosterFamilyRepository fosterFamilyRepository;
+
+    public PlacementService(PlacementRepository placementRepository, 
+                            PetRepository petRepository, 
+                            FosterFamilyRepository fosterFamilyRepository) {
+        this.placementRepository = placementRepository;
+        this.petRepository = petRepository;
+        this.fosterFamilyRepository = fosterFamilyRepository;
     }
 
-    public void confirm(long applicationId) {
-        AdoptionApplication app = applications.findById(applicationId)
-                .orElseThrow(() -> new PlacementRejectedException("Application not found."));
-        Pet pet = pets.findById(app.getPetId()).orElseThrow(() -> new PlacementRejectedException("Pet not found."));
-        FosterFamily family = families.findById(app.getFamilyId())
-                .orElseThrow(() -> new PlacementRejectedException("Family not found."));
-        if (app.getStatus() != ApplicationStatus.PENDING && app.getStatus() != ApplicationStatus.APPROVED)
-            throw new PlacementRejectedException("Application must be pending or approved.");
-        if (pet.getStatus() != PetStatus.AVAILABLE)
-            throw new PlacementRejectedException("Pet is not available.");
-        List<CriterionResult> results = matching.evaluate(pet, family);
-        if (!matching.isPassed(results, MatchOperator.AND))
-            throw new PlacementRejectedException("Matching requirements are not all satisfied.");
-        try {
-            placements.createPlacement(applicationId, pet.getId(), family.getId());
-        } catch (RuntimeException ex) {
-            throw new PlacementRejectedException(ex.getMessage());
+    public Placement createPlacement(Pet pet, FosterFamily family) {
+
+        // 1. Kiểm tra: Thú cưng đã có người nhận chưa
+        if (pet.getStatus() == PetStatus.UNAVAILABLE) {
+            throw new PlacementRejectedException("Từ chối bàn giao: Bé thú cưng này đã có gia đình khác nhận rồi!");
         }
+
+        // 2. Kiểm tra: Gia đình còn chỗ trống không
+        if (family.getCapacity() <= 0) {
+            throw new PlacementRejectedException("Từ chối bàn giao: Gia đình này đã hết chỗ trống để nhận nuôi thêm!");
+        }
+
+        // 3. Chuyển đổi ID sang kiểu long cho khớp với cơ sở dữ liệu
+        long petId = Long.parseLong(pet.getId());
+        long familyId = Long.valueOf(family.getId());
+
+        // 4. Tạo Tờ Biên Lai (Truyền giá trị tuần tự bằng dấu phẩy, KHÔNG ghi tên nhãn)
+        Placement bienLai = new Placement(
+            0L,                    // Giá trị cho id
+            petId,                 // Giá trị cho petId
+            familyId,              // Giá trị cho familyId
+            0L,                    // Giá trị cho applicationId
+            LocalDateTime.now(),   // Giá trị cho thời gian bàn giao
+            "Bàn giao thành công"  // Giá trị cho ghi chú
+        );
+
+        // 5. Cập nhật lại trạng thái Thú cưng và Sức chứa của Gia đình
+        pet.setStatus(PetStatus.UNAVAILABLE);
+        petRepository.update(pet);
+
+        family.setCapacity(family.getCapacity() - 1);
+        fosterFamilyRepository.update(family);
+
+        // 6. Lưu biên lai vào Database
+        placementRepository.save(bienLai);
+
+        return bienLai;
     }
 }
