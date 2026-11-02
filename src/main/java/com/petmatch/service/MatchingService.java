@@ -1,26 +1,23 @@
 package com.petmatch.service;
 
-import com.petmatch.matching.*;
-import com.petmatch.model.*;
-import java.util.*;
+import com.petmatch.matching.CapacityCriterion;
+import com.petmatch.matching.CriterionGroup;
+import com.petmatch.matching.CriterionResult;
+import com.petmatch.matching.ExperienceCriterion;
+import com.petmatch.matching.HousingCriterion;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.MatchOperator;
+import com.petmatch.model.Pet;
 
 public class MatchingService {
-    private final CriterionGroup group;
 
-    public MatchingService() {
-        group = new CriterionGroup(List.of(new HousingCriterion(), new ExperienceCriterion(), new CapacityCriterion()),
-                MatchOperator.AND);
-    }
+    public CriterionResult evaluateMatch(Pet pet, FosterFamily family, MatchOperator operator) {
+        CriterionGroup group = new CriterionGroup(operator);
+        
+        group.addCriterion(new CapacityCriterion());
+        group.addCriterion(new HousingCriterion());
+        group.addCriterion(new ExperienceCriterion());
 
-    public List<CriterionResult> evaluate(Pet pet, FosterFamily family) {
         return group.evaluate(pet, family);
-    }
-
-    public boolean isPassed(List<CriterionResult> results, MatchOperator operator) {
-        if (results == null || results.isEmpty() || operator == null)
-            return false;
-        if (operator == MatchOperator.AND)
-            return results.stream().allMatch(CriterionResult::passed);
-        return results.stream().anyMatch(CriterionResult::passed);
     }
 }
