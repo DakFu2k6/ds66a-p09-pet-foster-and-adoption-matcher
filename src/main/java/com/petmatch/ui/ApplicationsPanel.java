@@ -12,7 +12,12 @@ public class ApplicationsPanel extends JPanel {
     private final PetRepository pets;
     private final FosterFamilyRepository families;
     private final DefaultTableModel model = new DefaultTableModel(
-            new Object[] { "ID", "Pet ID", "Family ID", "Date", "Status", "Notes" }, 0);
+            new Object[] { "ID", "Pet ID", "Family ID", "Date", "Status", "Notes" }, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
     public ApplicationsPanel(ApplicationService s, PetRepository p, FosterFamilyRepository f) {
         service = s;

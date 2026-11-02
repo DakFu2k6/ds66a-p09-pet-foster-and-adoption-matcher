@@ -19,6 +19,8 @@ public class CriterionGroup {
     }
 
     public boolean isPassed(List<CriterionResult> results) {
+        if (results == null || results.isEmpty())
+            return false;
         return operator == MatchOperator.AND ? results.stream().allMatch(CriterionResult::passed)
                 : results.stream().anyMatch(CriterionResult::passed);
     }

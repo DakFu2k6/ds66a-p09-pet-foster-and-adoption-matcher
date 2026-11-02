@@ -7,19 +7,23 @@ import java.util.*;
 
 public class JdbcPetRepository implements PetRepository {
     private Pet map(ResultSet rs) throws SQLException {
+        CareProfile care = rs.getObject("care_profile_id") == null ? null
+                : new CareProfile(
+                        rs.getLong("care_profile_id"), rs.getInt("daily_exercise_minutes"),
+                        rs.getString("feeding_notes"), rs.getString("medical_notes"));
         PetType type = PetType.valueOf(rs.getString("species"));
         Object[] a = { rs.getLong("pet_id"), rs.getString("name"), rs.getString("breed"), rs.getInt("age_months"),
                 rs.getString("health_status"), rs.getString("temperament"), rs.getBoolean("special_care_required"),
                 rs.getString("housing_requirement"), PetStatus.valueOf(rs.getString("status")), null };
         if (type == PetType.DOG)
             return new Dog((long) a[0], (String) a[1], (String) a[2], (int) a[3], (String) a[4], (String) a[5],
-                    (boolean) a[6], (String) a[7], (PetStatus) a[8], null);
+                    (boolean) a[6], (String) a[7], (PetStatus) a[8], care);
         return new Cat((long) a[0], (String) a[1], (String) a[2], (int) a[3], (String) a[4], (String) a[5],
-                (boolean) a[6], (String) a[7], (PetStatus) a[8], null);
+                (boolean) a[6], (String) a[7], (PetStatus) a[8], care);
     }
 
     public List<Pet> findAll() {
-        String sql = "SELECT * FROM pets ORDER BY pet_id DESC";
+        String sql = "SELECT p.*,c.care_profile_id,c.daily_exercise_minutes,c.feeding_notes,c.medical_notes FROM pets p LEFT JOIN care_profiles c ON c.pet_id=p.pet_id ORDER BY p.pet_id DESC";
         try (Connection c = DatabaseConnection.getConnection();
                 PreparedStatement ps = c.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -34,7 +38,8 @@ public class JdbcPetRepository implements PetRepository {
 
     public Optional<Pet> findById(long id) {
         try (Connection c = DatabaseConnection.getConnection();
-                PreparedStatement ps = c.prepareStatement("SELECT * FROM pets WHERE pet_id=?")) {
+                PreparedStatement ps = c.prepareStatement(
+                        "SELECT p.*,c.care_profile_id,c.daily_exercise_minutes,c.feeding_notes,c.medical_notes FROM pets p LEFT JOIN care_profiles c ON c.pet_id=p.pet_id WHERE p.pet_id=?")) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? Optional.of(map(rs)) : Optional.empty();

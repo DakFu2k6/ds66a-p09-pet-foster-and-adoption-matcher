@@ -17,6 +17,8 @@ public class MatchingService {
     }
 
     public boolean isPassed(List<CriterionResult> results, MatchOperator operator) {
+        if (results == null || results.isEmpty() || operator == null)
+            return false;
         if (operator == MatchOperator.AND)
             return results.stream().allMatch(CriterionResult::passed);
         return results.stream().anyMatch(CriterionResult::passed);

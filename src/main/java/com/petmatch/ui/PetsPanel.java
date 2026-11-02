@@ -9,7 +9,12 @@ import java.awt.*;
 public class PetsPanel extends JPanel {
     private final PetService service;
     private final DefaultTableModel model = new DefaultTableModel(new Object[] { "ID", "Name", "Species", "Breed",
-            "Age (months)", "Health", "Special care", "Housing", "Status" }, 0);
+            "Age (months)", "Health", "Special care", "Housing", "Status" }, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
     private final JTable table = new JTable(model);
 
     public PetsPanel(PetService service) {

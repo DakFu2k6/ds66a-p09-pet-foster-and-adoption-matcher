@@ -30,6 +30,8 @@ public class PlacementService {
                 .orElseThrow(() -> new PlacementRejectedException("Family not found."));
         if (app.getStatus() != ApplicationStatus.PENDING && app.getStatus() != ApplicationStatus.APPROVED)
             throw new PlacementRejectedException("Application must be pending or approved.");
+        if (pet.getStatus() != PetStatus.AVAILABLE)
+            throw new PlacementRejectedException("Pet is not available.");
         List<CriterionResult> results = matching.evaluate(pet, family);
         if (!matching.isPassed(results, MatchOperator.AND))
             throw new PlacementRejectedException("Matching requirements are not all satisfied.");

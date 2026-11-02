@@ -28,6 +28,11 @@ public class ApplicationService {
             throw new InvalidApplicationException("Only available pets can receive applications.");
         if (!family.isActive())
             throw new InvalidApplicationException("Family is inactive.");
+        if (!family.hasCapacity())
+            throw new InvalidApplicationException("Family is at capacity.");
+        if (applications.findAll().stream().anyMatch(a -> a.getPetId() == petId && a.getFamilyId() == familyId
+                && (a.getStatus() == ApplicationStatus.PENDING || a.getStatus() == ApplicationStatus.APPROVED)))
+            throw new InvalidApplicationException("An open application already exists for this pet and family.");
         return applications.save(petId, familyId, notes);
     }
 }

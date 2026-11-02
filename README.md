@@ -1,159 +1,84 @@
-# OOP Java Project – Repository Setup Guide
+# PetMatch — Java Desktop / MySQL 8.4
 
-Tài liệu này hướng dẫn **các bước bắt buộc** để sinh viên tạo repository cho project từ **template chính thức của học phần**, cũng như các **quy định về đặt tên, phân quyền và làm việc nhóm**.
+Java 17+, Maven 3.9+, MySQL Server 8.4, Python 3.10+. Mở cả thư mục chứa pom.xml bằng VS Code. Tất cả lệnh dưới đây chạy từ thư mục đó.
 
-⚠️ Không tuân thủ các bước dưới đây sẽ bị trừ điểm project.
-
----
-
-## 1. Tạo repository từ template (BẮT BUỘC)
-
-### Bước 1: Sử dụng template
-1. Truy cập [Template Project Repository](https://github.com/fda-oop-java-anhpt/template-project)
-.
-2. Nhấn nút **Use this template**.
-3. Chọn:
-   - **Owner**: `fda-oop-java-anhpt`.
-   - **Repository visibility**: Private.
-
----
-
-### Bước 2: Đặt tên repository (BẮT BUỘC)
-
-Tên repository phải theo **đúng định dạng sau**:
-`<class>-pXX-<project-keyword>`
-
-
-Trong đó:
-
-| Thành phần | Ý nghĩa | Ví dụ |
-|----------|--------|-------|
-| `<class>` | Mã lớp <ai66a, ai66b> | `ai66a, ai66b` |
-| `pXX` | Mã project (01 → 10) | `p01` |
-| `project-keyword` | Tên project viết thường, không dấu, dùng dấu `-` | `yummy-catering` |
-
-### Ví dụ hợp lệ:
+## 1. Kiểm tra MySQL trên Windows
+```powershell
+Get-Service MySQL84
+Start-Service MySQL84  # PowerShell Admin nếu service chưa chạy
+Test-NetConnection 127.0.0.1 -Port 3306
 ```
-ai66a-p01-yummy-catering
-ai66b-p04-library-system
+Nếu không có service tên này: `Get-Service *mysql*`. MySQL Workbench là công cụ client; vẫn cần Server đang chạy.
+
+## 2. Cấu hình
+File `.env` gốc được giữ lại từ dự án của bạn. Kiểm tra 5 dòng DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD. Nếu thiếu file:
+```powershell
+Copy-Item .env.example .env
 ```
+Đặt DB_HOST=127.0.0.1, DB_PORT=3306, DB_NAME=pet_matcher_db; nhập tài khoản và mật khẩu MySQL thực tế. Không nhập MySQL84 vào DB_NAME. Mật khẩu có @ được giữ nguyên.
+Java ưu tiên environment variables > .env > classpath application.properties > mặc định. Python ưu tiên environment > .env > mặc định. Dùng .env thống nhất cho cả hai; không tạo bản mật khẩu trong resources.
+Không gửi hoặc commit .env. Nếu biến môi trường cũ ghi đè cấu hình: kiểm tra bằng `Get-ChildItem Env:DB_*` (có thể hiện mật khẩu, không chia sẻ output).
 
----
+## 3. Tạo schema
+Trong MySQL Workbench, mở và chạy theo thứ tự:
+1. database/01_create_database.sql
+2. database/02_schema.sql
+3. database/03_constraints.sql
+4. database/05_views.sql
 
-## 2. Thêm giảng viên vào repository (BẮT BUỘC)
+Bỏ qua 04_seed_data.sql vì sẽ dùng Python. Script USE cố định pet_matcher_db; nếu đổi tên DB phải sửa USE tương ứng. CREATE TABLE IF NOT EXISTS không tự migrate schema cũ: backup trước, kiểm tra cấu trúc nếu có database cũ.
 
-Sau khi tạo repository, nhóm phải **thêm giảng viên làm collaborator với quyền Admin**.
-
-### Các bước:
-1. Vào **Settings** → **Collaborators**.
-2. Thêm GitHub username của giảng viên: `anhpt204`
-3. Chọn quyền **Admin**.
-4. Gửi lời mời và đảm bảo giảng viên đã accept.
-
-⚠️ Không thêm giảng viên = coi như **chưa nộp bài**.
-
----
-
-## 3. Thêm các thành viên trong nhóm
-
-### Yêu cầu:
-- Mỗi sinh viên phải có **tài khoản GitHub cá nhân**.
-- Không dùng chung tài khoản GitHub.
-
-### Thực hiện:
-1. Vào **Settings** → **Collaborators**.
-2. Thêm GitHub username của từng thành viên.
-3. Cấp quyền **Write** cho các thành viên.
-
----
-
-## 4. Khai báo thông tin project và nhóm (BẮT BUỘC)
-
-Sau khi tạo repository, nhóm phải cập nhật đầy đủ các file sau:
-
-### 4.1. `docs/project-info.md`
-Cần điền đầy đủ:
-- Project ID
-- Tên project
-- Lớp
-- Nhóm
-- Danh sách thành viên và vai trò
-
----
-
-### 4.2. `docs/requirements.md`
-- Copy **toàn bộ nội dung đề bài project** được giao.
-- Không được để trống file này.
-
----
-
-## 5. Quy định làm việc với Git (BẮT BUỘC)
-
-### 5.1. Commit
-- Mỗi thành viên: **tối thiểu 20 commit**.
-- Commit message phải rõ ràng, có ý nghĩa.
-
-Ví dụ commit hợp lệ:
+## 4. Python: kiểm tra và seed
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python scripts/check_db.py
+python scripts/seed_data.py --dry-run --pets 200 --families 80 --applications 150
+python scripts/seed_data.py --pets 200 --families 80 --applications 150
 ```
-Add abstract class User
-Implement login validation
-Refactor OrderService logic
+Mặc định: 150 pets + 150 care profiles + 60 families + 100 applications. `--seed 42` giúp dữ liệu tái lập. Mọi dữ liệu là giả. INSERT có tham số, commit một transaction, rollback khi lỗi. Chạy lại sẽ THÊM batch, không xóa hay reset dữ liệu cũ. Applications có thể không phù hợp matching để demo cả pass/fail. Chưa seed placements để bạn tự demo quy trình.
+
+## 5. Test và chạy
+```powershell
+java -version
+mvn -version
+python -m unittest discover -s tests -v
+mvn clean test
+mvn exec:java "-Dexec.mainClass=com.petmatch.config.DatabaseDiagnostics"
+mvn exec:java
 ```
+Có thể chạy `powershell -ExecutionPolicy Bypass -File tests/run_all.ps1`. Java tests ở src/test/java theo chuẩn Maven; tests/ chứa Python tests và runner. Kết quả Maven ở target/surefire-reports.
+Đây là desktop app; không cần mở URL trong trình duyệt. Chỉ MySQL dùng localhost.
 
-Ví dụ commit KHÔNG chấp nhận:
+## 6. Chẩn đoán
+| Mã / triệu chứng | Xử lý |
+|---|---|
+| 2003 / communications link failure | Khởi động MySQL84; kiểm tra cổng 3306 |
+| 1045 | Sai user/password hoặc quyền host; thử cùng tài khoản trong Workbench với TCP 127.0.0.1 |
+| 1049 | DB_NAME chưa tồn tại; chạy 01_create_database.sql |
+| 1146 | Thiếu bảng; chạy 02_schema.sql |
+| No suitable driver | Chạy bằng Maven để nạp mysql-connector-j, không chạy java Main trực tiếp |
+| Lỗi DELIMITER | Dùng file 03 đã sửa, chạy toàn bộ trong Workbench |
+
+## Cấu trúc và kiến thức
+- model/: entity, enum; Pet abstract + Dog/Cat minh họa inheritance/polymorphism; CareProfile minh họa composition.
+- matching/: Strategy cho tiêu chí, CriterionGroup kết hợp AND/OR.
+- service/: validation và điều phối nghiệp vụ; phụ thuộc repository interface để test độc lập.
+- repository/: PreparedStatement, try-with-resources; placement transaction + FOR UPDATE.
+- config/: cấu hình kết nối và chẩn đoán theo mã lỗi.
+- ui/: Swing, event handlers, JTable; bảng chỉ đọc để tránh hiểu nhầm đã lưu.
+- scripts/: seed và kiểm tra DB, cấu hình dùng chung.
+
+Đọc docs/UPGRADE_REVIEW_VI.md để biết lỗi đã sửa, giới hạn và checklist tích hợp trước khi bảo vệ.
+
+## Integration test MySQL tùy chọn
+Tạo database riêng `pet_matcher_test`, chạy 02_schema.sql sau khi đổi dòng USE sang tên này. Không chạy test trên database demo/production.
+```powershell
+$env:DB_NAME="pet_matcher_test"
+$env:PETMATCH_MYSQL_TEST="true"
+mvn test
+Remove-Item Env:PETMATCH_MYSQL_TEST
+Remove-Item Env:DB_NAME
 ```
-update
-fix
-done
-```
-
-
----
-
-### 5.2. Thời gian commit
-- Không dồn toàn bộ commit vào 1–2 ngày cuối.
-- Mỗi tuần ít nhất 1 commit
-- Lịch sử commit sẽ được sử dụng để đánh giá mức độ đóng góp cá nhân.
-
----
-
-## 6. Sử dụng AI coding tools
-
-Sinh viên **được phép** sử dụng các AI coding tools (ChatGPT, Copilot, v.v.).
-
-### BẮT BUỘC:
-- Phải khai báo trung thực trong file: `docs/ai-usage.md`
-
-Nội dung cần ghi:
-- AI tool đã sử dụng.
-- Prompt mẫu.
-- Phần code có AI hỗ trợ.
-- Phần code do sinh viên tự viết hoặc chỉnh sửa.
-
-⚠️ Không khai báo AI usage được xem là **vi phạm học thuật**.
-
----
-
-## 7. Checklist trước khi nộp bài
-
-Trước khi nộp, nhóm phải tự kiểm tra:
-
-- [ ] Repository được tạo từ template chính thức.
-- [ ] Tên repository đúng định dạng.
-- [ ] Đã thêm giảng viên với quyền Admin.
-- [ ] Đã thêm đầy đủ các thành viên trong nhóm.
-- [ ] `docs/project-info.md` đã điền đầy đủ.
-- [ ] `docs/requirements.md` không để trống.
-- [ ] Có commit đều của các thành viên.
-
----
-
-## 8. Lưu ý quan trọng
-
-- Mỗi nhóm chỉ có **01 repository duy nhất**.
-- Không đổi tên repository sau khi đã bắt đầu làm project.
-- Mọi chỉnh sửa và trao đổi kỹ thuật phải thể hiện qua **commit trên GitHub**.
-
-- Repository là sản phẩm học tập chính thức của nhóm.  
-- Giảng viên sẽ đánh giá dựa trên code, lịch sử commit và khả năng giải thích khi bảo vệ project.  
-- Các vấn đề phát sinh do không đọc kỹ README sẽ không được giải quyết ngoại lệ.
+Test tạo fixture, xác nhận placement, kiểm tra đồng bộ các bảng và từ chối xác nhận lại; xóa fixture trong finally. Test tự bỏ qua nếu chưa bật biến trên. Không thay thế các case concurrency/rollback trong checklist.

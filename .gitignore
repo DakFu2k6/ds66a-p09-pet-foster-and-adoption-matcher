@@ -1,2 +1,6 @@
-application.properties
 .env
+application.properties
+target/
+.venv/
+__pycache__/
+*.log

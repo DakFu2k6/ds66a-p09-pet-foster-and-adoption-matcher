@@ -41,7 +41,11 @@ public final class DatabaseConnection {
                 if (s.isEmpty() || s.startsWith("#") || !s.contains("="))
                     continue;
                 int i = s.indexOf('=');
-                map.put(s.substring(0, i).trim(), s.substring(i + 1).trim());
+                String v = s.substring(i + 1).trim();
+                if (v.length() >= 2 && ((v.startsWith("\"") && v.endsWith("\""))
+                        || (v.startsWith("'") && v.endsWith("'"))))
+                    v = v.substring(1, v.length() - 1);
+                map.put(s.substring(0, i).trim(), v);
             }
         } catch (IOException ex) {
             throw new IllegalStateException("Cannot read .env", ex);
@@ -55,18 +59,29 @@ public final class DatabaseConnection {
         String name = value("DB_NAME", "db.name", "pet_matcher_db");
         String user = value("DB_USER", "db.username", "root");
         String password = value("DB_PASSWORD", "db.password", "");
+        if (!java.util.Set.of("127.0.0.1", "localhost", "::1").contains(host))
+            throw new SQLException("Local-only mode: DB_HOST must be localhost or 127.0.0.1.");
+        if (!name.matches("[A-Za-z0-9_]+"))
+            throw new SQLException("Invalid DB_NAME.");
+        try {
+            int n = Integer.parseInt(port);
+            if (n < 1 || n > 65535)
+                throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            throw new SQLException("DB_PORT must be 1..65535.");
+        }
         String url = "jdbc:mysql://" + host + ":" + port + "/" + name
-                + "?useSSL=false&allowPublicKeyRetrieval=true"
+                + "?sslMode=DISABLED&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=15000"
                 + "&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8";
         return DriverManager.getConnection(url, user, password);
     }
 
     private static String value(String envKey, String propKey, String fallback) {
         String fromEnv = System.getenv(envKey);
-        if (fromEnv != null && !fromEnv.isBlank())
+        if (fromEnv != null)
             return fromEnv;
         String fromFile = DOT_ENV.get(envKey);
-        if (fromFile != null && !fromFile.isBlank())
+        if (fromFile != null)
             return fromFile;
         return PROPERTIES.getProperty(propKey, fallback);
     }

@@ -9,7 +9,12 @@ import java.awt.*;
 public class FamiliesPanel extends JPanel {
     private final FosterFamilyService service;
     private final DefaultTableModel model = new DefaultTableModel(new Object[] { "ID", "Family", "Contact", "Phone",
-            "Housing", "Experience", "Capacity", "Occupied", "Yard", "Active" }, 0);
+            "Housing", "Experience", "Capacity", "Occupied", "Yard", "Active" }, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
     public FamiliesPanel(FosterFamilyService s) {
         service = s;

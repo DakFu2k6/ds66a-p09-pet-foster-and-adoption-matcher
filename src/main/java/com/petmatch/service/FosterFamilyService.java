@@ -16,6 +16,14 @@ public class FosterFamilyService {
     }
 
     public FosterFamily save(FosterFamily f) {
+        Objects.requireNonNull(f, "Family is required.");
+        if (f.getContactName() == null || f.getContactName().isBlank() || f.getPhone() == null
+                || !f.getPhone().matches("[+0-9 ()-]{7,30}") || f.getHousingType() == null
+                || f.getExperienceLevel() == null)
+            throw new IllegalArgumentException(
+                    "Contact name, phone (7-30 characters), housing and experience are required.");
+        if (f.getActivePetCount() < 0)
+            throw new IllegalArgumentException("Occupancy cannot be negative.");
         if (f.getFamilyName() == null || f.getFamilyName().isBlank())
             throw new IllegalArgumentException("Family name is required.");
         if (f.getCapacity() <= 0 || f.getActivePetCount() > f.getCapacity())
