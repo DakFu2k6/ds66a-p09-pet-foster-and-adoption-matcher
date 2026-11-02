@@ -38,14 +38,25 @@ public class JdbcApplicationRepository implements ApplicationRepository {
     }
 
     public AdoptionApplication save(long petId, long familyId, String notes) {
-        String q = "INSERT INTO applications(pet_id,family_id,notes) VALUES(?,?,?) RETURNING *";
-        try (Connection c = DatabaseConnection.getConnection(); PreparedStatement p = c.prepareStatement(q)) {
+        String q = "INSERT INTO applications(pet_id,family_id,notes) VALUES(?,?,?)";
+        try (Connection c = DatabaseConnection.getConnection();
+                PreparedStatement p = c.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
             p.setLong(1, petId);
             p.setLong(2, familyId);
             p.setString(3, notes);
-            try (ResultSet r = p.executeQuery()) {
-                r.next();
-                return map(r);
+            p.executeUpdate();
+            long newId;
+            try (ResultSet keys = p.getGeneratedKeys()) {
+                if (!keys.next())
+                    throw new SQLException("No generated id returned.");
+                newId = keys.getLong(1);
+            }
+            try (PreparedStatement s = c.prepareStatement("SELECT * FROM applications WHERE application_id=?")) {
+                s.setLong(1, newId);
+                try (ResultSet r = s.executeQuery()) {
+                    r.next();
+                    return map(r);
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Could not create application", e);

@@ -27,7 +27,7 @@ public class MainFrame extends JFrame {
                 new ApplicationsPanel(new ApplicationService(apps, pets, families), pets, families));
         tabs.addTab("Matching & Placement", new MatchingResultPanel(apps, pets, families, matching, placement));
         add(tabs, BorderLayout.CENTER);
-        JLabel footer = new JLabel("  PETMATCH  •  Java 17 / Swing / PostgreSQL");
+        JLabel footer = new JLabel("  PETMATCH  •  Java 17 / Swing / MySQL");
         footer.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         footer.setForeground(new Color(100, 115, 106));
         add(footer, BorderLayout.SOUTH);

@@ -1,3 +1,5 @@
+USE pet_matcher_db;
+
 INSERT INTO
     pets (
         name,
@@ -42,8 +44,7 @@ VALUES (
         TRUE,
         'HOUSE',
         'AVAILABLE'
-    )
-ON CONFLICT DO NOTHING;
+    );
 
 INSERT INTO
     foster_families (
@@ -93,5 +94,4 @@ VALUES (
         TRUE,
         FALSE,
         TRUE
-    )
-ON CONFLICT DO NOTHING;
+    );

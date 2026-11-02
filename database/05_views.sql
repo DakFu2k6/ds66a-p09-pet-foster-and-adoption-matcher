@@ -1,3 +1,5 @@
+USE pet_matcher_db;
+
 CREATE OR REPLACE VIEW v_dashboard_summary AS
 SELECT (
         SELECT COUNT(*)

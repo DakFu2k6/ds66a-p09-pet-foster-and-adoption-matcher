@@ -1,5 +1,5 @@
-db.url=jdbc:postgresql://localhost:5432/pet_matcher_db
-
-db.username=postgres
-
+db.host=127.0.0.1
+db.port=3306
+db.name=pet_matcher_db
+db.username=root
 db.password=CHANGE_ME

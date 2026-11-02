@@ -16,7 +16,8 @@ public class Main {
                 new MainFrame().setVisible(true);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null,
-                        "Cannot connect to PostgreSQL. Check application.properties / environment variables.\n\n"
+                        "Cannot connect to MySQL. Check .env / application.properties / environment variables "
+                                + "(DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD).\n\n"
                                 + ex.getMessage(),
                         "Database connection error", JOptionPane.ERROR_MESSAGE);
             }

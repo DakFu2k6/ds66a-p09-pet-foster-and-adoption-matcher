@@ -44,12 +44,16 @@ public class JdbcPetRepository implements PetRepository {
         }
     }
 
+    // MySQL không có RETURNING -> dùng RETURN_GENERATED_KEYS để lấy id tự tăng.
     public Pet save(Pet p) {
-        String sql = "INSERT INTO pets(name,species,breed,age_months,health_status,temperament,special_care_required,housing_requirement,status) VALUES(?,?,?,?,?,?,?,?,?) RETURNING pet_id";
-        try (Connection c = DatabaseConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+        String sql = "INSERT INTO pets(name,species,breed,age_months,health_status,temperament,special_care_required,housing_requirement,status) VALUES(?,?,?,?,?,?,?,?,?)";
+        try (Connection c = DatabaseConnection.getConnection();
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             bind(ps, p);
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (!rs.next())
+                    throw new SQLException("No generated id returned.");
                 p.setId(rs.getLong(1));
                 return p;
             }
