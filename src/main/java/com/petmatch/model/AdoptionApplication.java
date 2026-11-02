@@ -1,44 +1,50 @@
 package com.petmatch.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class AdoptionApplication {
-    private long id, petId, familyId;
-    private LocalDateTime applicationDate;
-    private ApplicationStatus status;
-    private String notes;
+    
+    private Integer id;                 
+    private Pet pet;                    
+    private FosterFamily family;        
+    private ApplicationStatus status;   
+    private LocalDate applicationDate;  
 
-    public AdoptionApplication(long id, long petId, long familyId, LocalDateTime date, ApplicationStatus status,
-            String notes) {
-        this.id = id;
-        this.petId = petId;
-        this.familyId = familyId;
-        this.applicationDate = date;
-        this.status = status;
-        this.notes = notes;
+    public AdoptionApplication() {
     }
-
-    public long getId() {
+    
+    public Integer getId() {
         return id;
     }
-
-    public long getPetId() {
-        return petId;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public long getFamilyId() {
-        return familyId;
+    public Pet getPet() {
+        return pet;
+    }
+    public void setPet(Pet pet) {
+        this.pet = pet;
     }
 
-    public LocalDateTime getApplicationDate() {
-        return applicationDate;
+    public FosterFamily getFamily() {
+        return family;
+    }
+    public void setFamily(FosterFamily family) {
+        this.family = family;
     }
 
     public ApplicationStatus getStatus() {
         return status;
     }
+    public void setStatus(ApplicationStatus status) {
+        this.status = status;
+    }
 
-    public String getNotes() {
-        return notes;
+    public LocalDate getApplicationDate() {
+        return applicationDate;
+    }
+    public void setApplicationDate(LocalDate applicationDate) {
+        this.applicationDate = applicationDate;
     }
 }
