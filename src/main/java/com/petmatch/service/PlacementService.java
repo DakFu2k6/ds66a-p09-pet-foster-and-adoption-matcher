@@ -16,8 +16,8 @@ public class PlacementService {
     private final PetRepository petRepository;
     private final FosterFamilyRepository fosterFamilyRepository;
 
-    public PlacementService(PlacementRepository placementRepository, 
-                            PetRepository petRepository, 
+    public PlacementService(PlacementRepository placementRepository,
+                            PetRepository petRepository,
                             FosterFamilyRepository fosterFamilyRepository) {
         this.placementRepository = placementRepository;
         this.petRepository = petRepository;
@@ -25,34 +25,24 @@ public class PlacementService {
     }
 
     public Placement createPlacement(Pet pet, FosterFamily family) {
-        // 1. Kiểm tra cơ bản phía Service trước khi gọi Database
-        if (family.getCapacity() <= family.getActivePetCount()) {
-            throw new PlacementRejectedException("Từ chối bàn giao: Gia đình này đã đạt tối đa sức chứa thú cưng!");
+        if (pet == null || family == null) {
+            throw new PlacementRejectedException("Thiếu thông tin thú cưng hoặc gia đình để bàn giao.");
         }
 
-        // 2. Chuyển đổi ID sang kiểu long
+        if (family.getCapacity() <= family.getActivePetCount()) {
+            throw new PlacementRejectedException("Từ chối bàn giao: Gia đình này đã đạt tối đa sức chứa!");
+        }
+
         long petId = Long.valueOf(pet.getId());
         long familyId = Long.valueOf(family.getId());
-        long applicationId = 0L; // Hoặc truyền ID đơn đăng ký nếu có
+        long applicationId = 0L;
 
         try {
-            // 3. Gọi trực tiếp transaction hoàn chỉnh từ JdbcPlacementRepository của Member 3
             placementRepository.createPlacement(applicationId, petId, familyId);
         } catch (Exception e) {
-            // Bắt lỗi từ database và ném ra ngoại lệ thân thiện cho người dùng
-            throw new PlacementRejectedException("Không thể thực hiện bàn giao: " + e.getMessage());
+            throw new PlacementRejectedException("Bàn giao thất bại từ cơ sở dữ liệu: " + e.getMessage());
         }
 
-        // 4. Trả về đối tượng Placement để hiển thị lên giao diện UI
-        Placement bienLai = new Placement(
-            0L,                    
-            applicationId,         
-            petId,                 
-            familyId,              
-            LocalDateTime.now(),   
-            "Bàn giao thành công"  
-        );
-
-        return bienLai;
+        return new Placement(0L, applicationId, petId, familyId, LocalDateTime.now(), "Bàn giao thành công");
     }
 }

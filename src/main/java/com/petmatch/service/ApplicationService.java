@@ -1,6 +1,5 @@
 package com.petmatch.service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,7 +11,7 @@ import com.petmatch.model.Pet;
 import com.petmatch.repository.ApplicationRepository;
 
 public class ApplicationService {
-    
+
     private final ApplicationRepository applicationRepository;
 
     public ApplicationService(ApplicationRepository applicationRepository) {
@@ -20,27 +19,17 @@ public class ApplicationService {
     }
 
     public AdoptionApplication createApplication(Pet pet, FosterFamily family) {
-        
         if (pet == null) {
-            throw new InvalidApplicationException("Lỗi rồi: Bạn chưa chọn con vật nào cả!");
+            throw new InvalidApplicationException("Lỗi: Bạn chưa chọn thú cưng!");
         }
-
         if (family == null) {
-            throw new InvalidApplicationException("Lỗi rồi: Bạn chưa chọn gia đình nhận nuôi!");
+            throw new InvalidApplicationException("Lỗi: Bạn chưa chọn gia đình nhận nuôi!");
         }
-
-        AdoptionApplication newApplication = new AdoptionApplication();
-        newApplication.setPet(pet);            
-        newApplication.setFamily(family);      
-        
-        newApplication.setStatus(ApplicationStatus.PENDING); 
-        
-        newApplication.setApplicationDate(LocalDate.now());
 
         return applicationRepository.save(
-            pet.getId(),
-            family.getId(),
-            newApplication.getStatus().name()
+            pet.getId(), 
+            family.getId(), 
+            ApplicationStatus.PENDING.name()
         );
     }
 
@@ -49,12 +38,12 @@ public class ApplicationService {
     }
 
     public void updateApplicationStatus(Integer id, ApplicationStatus newStatus) {
-        
-        Optional<AdoptionApplication> application = applicationRepository.findById(id);
-        AdoptionApplication oldApplication = application.orElseThrow(() ->
-            new InvalidApplicationException("Không tìm thấy tờ đơn nào có mã số này!"));
-        
-        oldApplication.setStatus(newStatus);
-        
+        Optional<AdoptionApplication> optionalApp = applicationRepository.findById(id);
+        AdoptionApplication app = optionalApp.orElseThrow(() ->
+            new InvalidApplicationException("Không tìm thấy tờ đơn có mã số: " + id)
+        );
+
+        app.setStatus(newStatus);
+        applicationRepository.update(app);
     }
 }
