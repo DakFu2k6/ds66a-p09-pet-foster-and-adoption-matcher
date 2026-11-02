@@ -5,10 +5,10 @@ import java.time.LocalDate;
 public class AdoptionApplication {
     
     private Integer id;                 
-    private Pet pet;                    
+    private Pet pet;                   
     private FosterFamily family;        
     private ApplicationStatus status;   
-    private LocalDate applicationDate;  
+    private LocalDate applicationDate; 
 
     public AdoptionApplication() {
     }
