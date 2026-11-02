@@ -27,39 +27,41 @@ public class PlacementService {
 
     public Placement createPlacement(Pet pet, FosterFamily family) {
 
-        // 1. Kiểm tra: Thú cưng đã có người nhận chưa
+        // 1. Kiểm tra trạng thái thú cưng
         if (pet.getStatus() == PetStatus.UNAVAILABLE) {
             throw new PlacementRejectedException("Từ chối bàn giao: Bé thú cưng này đã có gia đình khác nhận rồi!");
         }
 
-        // 2. Kiểm tra: Gia đình còn chỗ trống không
+        // 2. Kiểm tra sức chứa gia đình
         if (family.getCapacity() <= 0) {
             throw new PlacementRejectedException("Từ chối bàn giao: Gia đình này đã hết chỗ trống để nhận nuôi thêm!");
         }
 
-        // 3. Chuyển đổi ID sang kiểu long cho khớp với cơ sở dữ liệu
-        long petId = Long.parseLong(pet.getId());
+        // 3. Chuyển đổi ID sang kiểu long
+        long petId = Long.valueOf(pet.getId());
         long familyId = Long.valueOf(family.getId());
+        long applicationId = 0L; // Nếu chưa có mã đơn cụ thể, tạm để 0L
 
-        // 4. Tạo Tờ Biên Lai (Truyền giá trị tuần tự bằng dấu phẩy, KHÔNG ghi tên nhãn)
-        Placement bienLai = new Placement(
-            0L,                    // Giá trị cho id
-            petId,                 // Giá trị cho petId
-            familyId,              // Giá trị cho familyId
-            0L,                    // Giá trị cho applicationId
-            LocalDateTime.now(),   // Giá trị cho thời gian bàn giao
-            "Bàn giao thành công"  // Giá trị cho ghi chú
-        );
-
-        // 5. Cập nhật lại trạng thái Thú cưng và Sức chứa của Gia đình
+        // 4. Cập nhật lại trạng thái Thú cưng thành UNAVAILABLE và lưu xuống Database
         pet.setStatus(PetStatus.UNAVAILABLE);
         petRepository.update(pet);
 
+        // 5. Giảm sức chứa của Gia đình đi 1 và lưu xuống Database
         family.setCapacity(family.getCapacity() - 1);
         fosterFamilyRepository.update(family);
 
-        // 6. Lưu biên lai vào Database
-        placementRepository.save(bienLai);
+        // 6. Gọi đúng hàm createPlacement của Chú Thủ Kho PlacementRepository
+        placementRepository.createPlacement(applicationId, petId, familyId);
+
+        // 7. Tạo một tờ biên lai giả lập để trả về cho giao diện hiển thị
+        Placement bienLai = new Placement(
+            0L,                    
+            applicationId,         
+            petId,                 
+            familyId,              
+            LocalDateTime.now(),   
+            "Bàn giao thành công"  
+        );
 
         return bienLai;
     }

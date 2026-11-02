@@ -1,7 +1,9 @@
 package com.petmatch.repository;
 
+import java.util.List;
+import java.util.Optional;
+
 import com.petmatch.model.FosterFamily;
-import java.util.*;
 
 public interface FosterFamilyRepository {
     List<FosterFamily> findAll();
@@ -9,4 +11,6 @@ public interface FosterFamilyRepository {
     Optional<FosterFamily> findById(long id);
 
     FosterFamily save(FosterFamily family);
+
+    void update(FosterFamily family); 
 }
