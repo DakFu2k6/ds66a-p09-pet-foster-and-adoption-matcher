@@ -1,77 +1,103 @@
 package com.petmatch.repository;
 
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 import com.petmatch.config.DatabaseConnection;
-import com.petmatch.model.*;
-import java.sql.*;
-import java.util.*;
+import com.petmatch.model.AdoptionApplication;
+import com.petmatch.model.ApplicationStatus;
 
 public class JdbcApplicationRepository implements ApplicationRepository {
-    private AdoptionApplication map(ResultSet r) throws SQLException {
-        return new AdoptionApplication(r.getLong("application_id"), r.getLong("pet_id"), r.getLong("family_id"),
-                r.getTimestamp("application_date").toLocalDateTime(), ApplicationStatus.valueOf(r.getString("status")),
-                r.getString("notes"));
-    }
 
-    public List<AdoptionApplication> findAll() {
+    @Override
+    public AdoptionApplication save(long petId, long familyId, String status) {
+        String q = "INSERT INTO applications(pet_id, family_id, status, application_date) VALUES(?, ?, ?, ?)";
         try (Connection c = DatabaseConnection.getConnection();
-                PreparedStatement p = c.prepareStatement("SELECT * FROM applications ORDER BY application_id DESC");
-                ResultSet r = p.executeQuery()) {
-            List<AdoptionApplication> x = new ArrayList<>();
-            while (r.next())
-                x.add(map(r));
-            return x;
-        } catch (SQLException e) {
-            throw new RuntimeException("Could not load applications", e);
-        }
-    }
-
-    public Optional<AdoptionApplication> findById(long id) {
-        try (Connection c = DatabaseConnection.getConnection();
-                PreparedStatement p = c.prepareStatement("SELECT * FROM applications WHERE application_id=?")) {
-            p.setLong(1, id);
-            try (ResultSet r = p.executeQuery()) {
-                return r.next() ? Optional.of(map(r)) : Optional.empty();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Could not find application", e);
-        }
-    }
-
-    public AdoptionApplication save(long petId, long familyId, String notes) {
-        String q = "INSERT INTO applications(pet_id,family_id,notes) VALUES(?,?,?)";
-        try (Connection c = DatabaseConnection.getConnection();
-                PreparedStatement p = c.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement p = c.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
             p.setLong(1, petId);
             p.setLong(2, familyId);
-            p.setString(3, notes);
+            p.setString(3, status);
+            p.setDate(4, Date.valueOf(LocalDate.now()));
             p.executeUpdate();
-            long newId;
-            try (ResultSet keys = p.getGeneratedKeys()) {
-                if (!keys.next())
-                    throw new SQLException("No generated id returned.");
-                newId = keys.getLong(1);
-            }
-            try (PreparedStatement s = c.prepareStatement("SELECT * FROM applications WHERE application_id=?")) {
-                s.setLong(1, newId);
-                try (ResultSet r = s.executeQuery()) {
-                    r.next();
-                    return map(r);
+
+            try (ResultSet r = p.getGeneratedKeys()) {
+                if (r.next()) {
+                    AdoptionApplication app = new AdoptionApplication();
+                    app.setId((int) r.getLong(1));
+                    app.setStatus(ApplicationStatus.valueOf(status));
+                    app.setApplicationDate(LocalDate.now());
+                    return app;
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Could not create application", e);
+            throw new RuntimeException("Không thể lưu đơn đăng ký vào Database", e);
         }
+        return null;
     }
 
-    public void updateStatus(long id, ApplicationStatus status) {
+    @Override
+    public List<AdoptionApplication> findAll() {
+        String q = "SELECT * FROM applications ORDER BY application_id DESC";
+        List<AdoptionApplication> list = new ArrayList<>();
         try (Connection c = DatabaseConnection.getConnection();
-                PreparedStatement p = c.prepareStatement("UPDATE applications SET status=? WHERE application_id=?")) {
-            p.setString(1, status.name());
-            p.setLong(2, id);
-            if (p.executeUpdate() == 0)
-                throw new RuntimeException("Application not found.");
+             PreparedStatement p = c.prepareStatement(q);
+             ResultSet r = p.executeQuery()) {
+            while (r.next()) {
+                AdoptionApplication app = new AdoptionApplication();
+                app.setId(r.getInt("application_id"));
+                app.setStatus(ApplicationStatus.valueOf(r.getString("status")));
+                if (r.getDate("application_date") != null) {
+                    app.setApplicationDate(r.getDate("application_date").toLocalDate());
+                }
+                list.add(app);
+            }
         } catch (SQLException e) {
-            throw new RuntimeException("Could not update application", e);
+            throw new RuntimeException("Không thể đọc danh sách đơn đăng ký", e);
+        }
+        return list;
+    }
+
+    @Override
+    public Optional<AdoptionApplication> findById(long id) {
+        String q = "SELECT * FROM applications WHERE application_id = ?";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(q)) {
+            p.setLong(1, id);
+            try (ResultSet r = p.executeQuery()) {
+                if (r.next()) {
+                    AdoptionApplication app = new AdoptionApplication();
+                    app.setId(r.getInt("application_id"));
+                    app.setStatus(ApplicationStatus.valueOf(r.getString("status")));
+                    if (r.getDate("application_date") != null) {
+                        app.setApplicationDate(r.getDate("application_date").toLocalDate());
+                    }
+                    return Optional.of(app);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Không tìm thấy đơn đăng ký mã số: " + id, e);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public void update(AdoptionApplication app) {
+        String q = "UPDATE applications SET status = ? WHERE application_id = ?";
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement p = c.prepareStatement(q)) {
+            p.setString(1, app.getStatus().name());
+            p.setInt(2, app.getId());
+            p.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Không thể cập nhật trạng thái đơn đăng ký", e);
         }
     }
 }

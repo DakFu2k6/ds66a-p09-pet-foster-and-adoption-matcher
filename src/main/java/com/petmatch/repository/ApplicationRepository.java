@@ -1,14 +1,16 @@
 package com.petmatch.repository;
 
-import com.petmatch.model.*;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+
+import com.petmatch.model.AdoptionApplication;
 
 public interface ApplicationRepository {
+    AdoptionApplication save(long petId, long familyId, String status);
+
     List<AdoptionApplication> findAll();
 
-    AdoptionApplication save(long petId, long familyId, String notes);
-
-    void updateStatus(long id, ApplicationStatus status);
-
     Optional<AdoptionApplication> findById(long id);
+
+    void update(AdoptionApplication application);
 }
