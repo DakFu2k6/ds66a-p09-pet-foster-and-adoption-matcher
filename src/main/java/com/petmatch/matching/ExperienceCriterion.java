@@ -1,16 +1,20 @@
 package com.petmatch.matching;
 
-import com.petmatch.model.*;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.Pet;
 
 public class ExperienceCriterion implements MatchCriterion {
-    public String getName() {
-        return "Care experience";
-    }
 
+    @Override
     public CriterionResult evaluate(Pet pet, FosterFamily family) {
-        boolean pass = !pet.isSpecialCareRequired() || family.getExperienceLevel() != ExperienceLevel.BEGINNER;
-        return new CriterionResult(getName(), pass, pass
-                ? "The family's experience level is acceptable."
-                : "Special-care pets require at least intermediate experience.");
+        if (pet == null || family == null) {
+            return CriterionResult.fail("Thiếu thông tin thú cưng hoặc gia đình.");
+        }
+
+        if (family.getExperienceLevel() != null) {
+            return CriterionResult.pass("Gia đình có mức độ kinh nghiệm: " + family.getExperienceLevel());
+        }
+
+        return CriterionResult.fail("Gia đình chưa cập nhật thông tin kinh nghiệm chăm sóc.");
     }
 }
