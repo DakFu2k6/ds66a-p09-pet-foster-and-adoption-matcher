@@ -17,11 +17,24 @@ import com.petmatch.model.ApplicationStatus;
 
 public class JdbcApplicationRepository implements ApplicationRepository {
 
+    private AdoptionApplication mapRow(ResultSet r) throws SQLException {
+        AdoptionApplication app = new AdoptionApplication();
+        app.setId(r.getInt("application_id"));
+        app.setStatus(ApplicationStatus.valueOf(r.getString("status")));
+        
+        Date sqlDate = r.getDate("application_date");
+        if (sqlDate != null) {
+            app.setApplicationDate(sqlDate.toLocalDate());
+        }
+        return app;
+    }
+
     @Override
     public AdoptionApplication save(long petId, long familyId, String status) {
         String q = "INSERT INTO applications(pet_id, family_id, status, application_date) VALUES(?, ?, ?, ?)";
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
+            
             p.setLong(1, petId);
             p.setLong(2, familyId);
             p.setString(3, status);
@@ -47,17 +60,13 @@ public class JdbcApplicationRepository implements ApplicationRepository {
     public List<AdoptionApplication> findAll() {
         String q = "SELECT * FROM applications ORDER BY application_id DESC";
         List<AdoptionApplication> list = new ArrayList<>();
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q);
              ResultSet r = p.executeQuery()) {
+            
             while (r.next()) {
-                AdoptionApplication app = new AdoptionApplication();
-                app.setId(r.getInt("application_id"));
-                app.setStatus(ApplicationStatus.valueOf(r.getString("status")));
-                if (r.getDate("application_date") != null) {
-                    app.setApplicationDate(r.getDate("application_date").toLocalDate());
-                }
-                list.add(app);
+                list.add(mapRow(r)); 
             }
         } catch (SQLException e) {
             throw new RuntimeException("Không thể đọc danh sách đơn đăng ký", e);
@@ -68,18 +77,14 @@ public class JdbcApplicationRepository implements ApplicationRepository {
     @Override
     public Optional<AdoptionApplication> findById(long id) {
         String q = "SELECT * FROM applications WHERE application_id = ?";
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q)) {
+            
             p.setLong(1, id);
             try (ResultSet r = p.executeQuery()) {
                 if (r.next()) {
-                    AdoptionApplication app = new AdoptionApplication();
-                    app.setId(r.getInt("application_id"));
-                    app.setStatus(ApplicationStatus.valueOf(r.getString("status")));
-                    if (r.getDate("application_date") != null) {
-                        app.setApplicationDate(r.getDate("application_date").toLocalDate());
-                    }
-                    return Optional.of(app);
+                    return Optional.of(mapRow(r)); 
                 }
             }
         } catch (SQLException e) {
@@ -91,8 +96,10 @@ public class JdbcApplicationRepository implements ApplicationRepository {
     @Override
     public void update(AdoptionApplication app) {
         String q = "UPDATE applications SET status = ? WHERE application_id = ?";
+        
         try (Connection c = DatabaseConnection.getConnection();
              PreparedStatement p = c.prepareStatement(q)) {
+            
             p.setString(1, app.getStatus().name());
             p.setInt(2, app.getId());
             p.executeUpdate();
