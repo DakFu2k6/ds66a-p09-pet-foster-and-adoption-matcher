@@ -1,5 +1,4 @@
 package com.petmatch.model;
-
 public class FosterFamily {
     private long id;
     private String familyName, contactName, phone;
@@ -7,6 +6,9 @@ public class FosterFamily {
     private ExperienceLevel experienceLevel;
     private int capacity, activePetCount;
     private boolean hasYard, hasChildren, active;
+
+    public FosterFamily() {
+    }
 
     public FosterFamily(long id, String familyName, String contactName, String phone,
             HousingType housingType, ExperienceLevel experienceLevel, int capacity,
@@ -70,5 +72,49 @@ public class FosterFamily {
 
     public boolean hasCapacity() {
         return active && activePetCount < capacity;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setFamilyName(String familyName) {
+        this.familyName = familyName;
+    }
+
+    public void setContactName(String contactName) {
+        this.contactName = contactName;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void setHousingType(HousingType housingType) {
+        this.housingType = housingType;
+    }
+
+    public void setExperienceLevel(ExperienceLevel experienceLevel) {
+        this.experienceLevel = experienceLevel;
+    }
+
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
+
+    public void setActivePetCount(int activePetCount) {
+        this.activePetCount = activePetCount;
+    }
+
+    public void setHasYard(boolean hasYard) {
+        this.hasYard = hasYard;
+    }
+
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }
