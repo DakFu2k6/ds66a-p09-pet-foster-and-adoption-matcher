@@ -1,16 +1,23 @@
 package com.petmatch.model;
 
 import java.time.LocalDate;
-
 public class AdoptionApplication {
     
-    private Integer id;                 
-    private Pet pet;                   
+    private Integer id;                    
+    private Pet pet;                     
     private FosterFamily family;        
     private ApplicationStatus status;   
     private LocalDate applicationDate; 
 
     public AdoptionApplication() {
+    }
+
+    public AdoptionApplication(Integer id, Pet pet, FosterFamily family, ApplicationStatus status, LocalDate applicationDate) {
+        this.id = id;
+        this.pet = pet;
+        this.family = family;
+        this.status = status;
+        this.applicationDate = applicationDate;
     }
     
     public Integer getId() {
