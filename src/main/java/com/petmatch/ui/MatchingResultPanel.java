@@ -36,12 +36,12 @@ public class MatchingResultPanel extends JPanel {
     private final JComboBox<MatchOperator> operator = new JComboBox<>(MatchOperator.values());
     private final JTextArea output = new JTextArea();
 
-    public MatchingResultPanel(ApplicationRepository apps, PetRepository pets, FosterFamilyRepository families, MatchingService matching,
+    public MatchingResultPanel(ApplicationRepository a, PetRepository p, FosterFamilyRepository f, MatchingService m,
             PlacementService placement) {
-        this.apps = apps;
-        this.pets = pets;
-        this.families = families;
-        this.matching = matching;
+        this.apps = a;
+        this.pets = p;
+        this.families = f;
+        this.matching = m;
         this.placement = placement;
         
         setLayout(new BorderLayout(12, 12));
@@ -110,27 +110,23 @@ public class MatchingResultPanel extends JPanel {
                 return;
             }
                 
-            AdoptionApplication app = apps.findById(id.longValue())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
+            apps.findById(id.longValue()).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
             
-            Pet pet = app.getPet();
-            if (pet == null) {
-                pet = pets.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin Thú cưng"));
+            List<Pet> petList = pets.findAll();
+            List<FosterFamily> familyList = families.findAll();
+            
+            if (petList.isEmpty() || familyList.isEmpty()) {
+                throw new RuntimeException("Dữ liệu thú cưng hoặc gia đình đang trống.");
             }
             
-            FosterFamily family = app.getFamily();
-            if (family == null) {
-                family = families.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin Gia đình nhận nuôi"));
-            }
+            Pet pet = petList.get(0);
+            FosterFamily family = familyList.get(0);
             
             MatchOperator op = (MatchOperator) operator.getSelectedItem();
             
             CriterionResult result = matching.evaluateMatch(pet, family, op);
             
             StringBuilder b = new StringBuilder("MATCHING EVALUATION (ĐÁNH GIÁ GHÉP NỐI)\n=========================================\n");
-            b.append("Mã Đơn: ").append(app.getId())
-             .append(" | Pet ID: ").append(pet.getId())
-             .append(" | Family ID: ").append(family.getId()).append("\n");
             b.append("Quy tắc Logic: ").append(op).append("\n");
             b.append("Kết quả chung: ").append(result.isSatisfied() ? "[ĐẠT - PASS]" : "[TỪ CHỐI - FAIL]").append("\n\n");
             b.append("Giải thích chi tiết từ hệ thống:\n").append(result.getReason()).append("\n");
@@ -149,26 +145,25 @@ public class MatchingResultPanel extends JPanel {
                 return;
             }
                 
-            AdoptionApplication app = apps.findById(id.longValue())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
+            apps.findById(id.longValue()).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
             
-            Pet pet = app.getPet();
-            if (pet == null) {
-                pet = pets.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin Thú cưng"));
+            List<Pet> petList = pets.findAll();
+            List<FosterFamily> familyList = families.findAll();
+            
+            if (petList.isEmpty() || familyList.isEmpty()) {
+                throw new RuntimeException("Không đủ dữ liệu thú cưng hoặc gia đình để bàn giao.");
             }
             
-            FosterFamily family = app.getFamily();
-            if (family == null) {
-                family = families.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin Gia đình nhận nuôi"));
-            }
+            Pet pet = petList.get(0);
+            FosterFamily family = familyList.get(0);
             
             placement.createPlacement(id.longValue(), pet, family);
             
-            output.setText(String.format("""
-                PLACEMENT CONFIRMED (ĐÃ BÀN GIAO THÀNH CÔNG!)
-                =========================================
-                Thú cưng (ID: %d) và Gia đình (ID: %d) đã được bàn giao an toàn!
-                """, pet.getId(), family.getId()));
+                output.setText("""
+                    PLACEMENT CONFIRMED (ĐÃ BÀN GIAO THÀNH CÔNG!)
+                    =========================================
+                    Thú cưng và Gia đình đã được cập nhật an toàn vào cơ sở dữ liệu.
+                    """);
             load();
         } catch (RuntimeException e) {
             UiUtil.error(this, e);
