@@ -25,8 +25,9 @@ import com.petmatch.service.PetService;
 
 public class PetsPanel extends JPanel {
     private final PetService service;
-    private final DefaultTableModel model = new DefaultTableModel(new Object[] { "ID", "Name", "Species", "Breed",
-            "Age (months)", "Health", "Special care", "Housing", "Status" }, 0) {
+    
+    private final DefaultTableModel model = new DefaultTableModel(new Object[] { 
+            "ID", "Tên", "Loài", "Giống", "Tuổi (tháng)", "Sức khỏe", "Chăm sóc đặc biệt", "Môi trường sống", "Trạng thái" }, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
@@ -39,15 +40,15 @@ public class PetsPanel extends JPanel {
         setLayout(new BorderLayout(12, 12));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        add(UiUtil.pageTitle("Pet management", "Register and maintain dog and cat profiles"), BorderLayout.NORTH);
+        add(UiUtil.pageTitle("QUẢN LÝ THÚ CƯNG", "Đăng ký và cập nhật hồ sơ chó mèo"), BorderLayout.NORTH);
         
         table.setRowHeight(28);
         add(new JScrollPane(table), BorderLayout.CENTER);
         
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addBtn = new JButton("Add pet");
-        JButton delBtn = new JButton("Delete selected");
-        JButton refreshBtn = new JButton("Refresh");
+        JButton addBtn = new JButton("Thêm thú cưng");
+        JButton delBtn = new JButton("Xóa đã chọn");
+        JButton refreshBtn = new JButton("Làm mới danh sách");
         
         for (JButton b : new JButton[] { addBtn, delBtn, refreshBtn }) {
             UiUtil.styleButton(b);
@@ -68,10 +69,10 @@ public class PetsPanel extends JPanel {
             for (Pet p : service.findAll()) {
                 model.addRow(new Object[] { 
                     p.getId(), p.getName(), p.getType(), p.getBreed(), p.getAgeMonths(),
-                    p.getHealthStatus(), p.isSpecialCareRequired(), p.getHousingRequirement(), p.getStatus() 
+                    p.getHealthStatus(), p.isSpecialCareRequired() ? "Có" : "Không", p.getHousingRequirement(), p.getStatus() 
                 });
             }
-        } catch (NumberFormatException ex) {
+        } catch (RuntimeException ex) {
             UiUtil.error(this, ex);
         }
     }
@@ -85,27 +86,27 @@ public class PetsPanel extends JPanel {
         JComboBox<String> health = new JComboBox<>(new String[] { "GOOD", "RECOVERING", "SPECIAL_NEEDS" });
         JComboBox<String> temperament = new JComboBox<>(new String[] { "FRIENDLY", "CALM", "SHY", "ACTIVE" });
         JComboBox<String> housing = new JComboBox<>(new String[] { "ANY", "HOUSE", "APARTMENT", "YARD" });
-        JCheckBox special = new JCheckBox("Requires special care");
+        JCheckBox special = new JCheckBox("Yêu cầu chăm sóc đặc biệt");
         
         JPanel form = new JPanel(new GridLayout(0, 2, 8, 8));
-        form.add(new JLabel("Name"));
+        form.add(new JLabel("Tên thú cưng:"));
         form.add(name);
-        form.add(new JLabel("Species"));
+        form.add(new JLabel("Loài:"));
         form.add(type);
-        form.add(new JLabel("Breed"));
+        form.add(new JLabel("Giống:"));
         form.add(breed);
-        form.add(new JLabel("Age in months"));
+        form.add(new JLabel("Tuổi (tháng):"));
         form.add(age);
-        form.add(new JLabel("Health"));
+        form.add(new JLabel("Tình trạng sức khỏe:"));
         form.add(health);
-        form.add(new JLabel("Temperament"));
+        form.add(new JLabel("Tính cách:"));
         form.add(temperament);
-        form.add(new JLabel("Housing requirement"));
+        form.add(new JLabel("Yêu cầu chỗ ở:"));
         form.add(housing);
-        form.add(new JLabel("Special care"));
+        form.add(new JLabel("Chăm sóc đặc biệt:"));
         form.add(special);
         
-        if (JOptionPane.showConfirmDialog(this, form, "Register pet",
+        if (JOptionPane.showConfirmDialog(this, form, "Đăng ký thú cưng mới",
                 JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
             return;
             
@@ -120,8 +121,13 @@ public class PetsPanel extends JPanel {
                             special.isSelected(), (String) housing.getSelectedItem(), PetStatus.AVAILABLE, null);
                             
             service.save(p);
+            JOptionPane.showMessageDialog(this, "Thêm thú cưng mới thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             load();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Tuổi của thú cưng phải là một số nguyên dương!", "Lỗi nhập liệu", JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException | ClassCastException ex) {
+            UiUtil.error(this, ex);
+        } catch (RuntimeException ex) {
             UiUtil.error(this, ex);
         }
     }
@@ -129,17 +135,18 @@ public class PetsPanel extends JPanel {
     private void deletePet() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Select a pet first.");
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng để xóa!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if (JOptionPane.showConfirmDialog(this, "Delete selected pet?", "Confirm",
+        if (JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa thú cưng này?", "Xác nhận",
                 JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
             return;
             
         try {
             service.delete(((Number) model.getValueAt(row, 0)).longValue());
+            JOptionPane.showMessageDialog(this, "Xóa thú cưng thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
             load();
-        } catch (Exception ex) {
+        } catch (RuntimeException ex) {
             UiUtil.error(this, ex);
         }
     }
