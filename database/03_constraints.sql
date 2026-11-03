@@ -2,7 +2,7 @@ USE pet_matcher_db;
 
 DROP PROCEDURE IF EXISTS add_index_if_missing;
 
-DELIMITER / /
+DELIMITER //
 
 CREATE PROCEDURE add_index_if_missing(
     IN p_table VARCHAR(64),
@@ -23,7 +23,7 @@ BEGIN
     END IF;
 END//
 
-DELIMITER;
+DELIMITER ;
 
 CALL add_index_if_missing (
     'foster_families',
