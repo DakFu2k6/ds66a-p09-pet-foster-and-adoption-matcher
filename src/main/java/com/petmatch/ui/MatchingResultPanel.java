@@ -27,8 +27,6 @@ import com.petmatch.service.PlacementService;
 
 public class MatchingResultPanel extends JPanel {
     private final ApplicationRepository apps;
-    private final PetRepository pets;
-    private final FosterFamilyRepository families;
     private final MatchingService matching;
     private final PlacementService placement;
     
@@ -36,11 +34,10 @@ public class MatchingResultPanel extends JPanel {
     private final JComboBox<MatchOperator> operator = new JComboBox<>(MatchOperator.values());
     private final JTextArea output = new JTextArea();
 
+    // Giữ nguyên đúng các tham số constructor ban đầu để MainFrame.java không bị lỗi
     public MatchingResultPanel(ApplicationRepository a, PetRepository p, FosterFamilyRepository f, MatchingService m,
             PlacementService placement) {
         this.apps = a;
-        this.pets = p;
-        this.families = f;
         this.matching = m;
         this.placement = placement;
         
@@ -90,13 +87,13 @@ public class MatchingResultPanel extends JPanel {
         }
     }
 
-    private Long selectedId() {
+    private Integer selectedId() {
         Object selected = applicationBox.getSelectedItem();
         if (selected == null)
             return null;
         try {
             String text = selected.toString().split(" - ")[0].trim();
-            return Long.valueOf(text);
+            return Integer.valueOf(text);
         } catch (NumberFormatException e) {
             return null;
         }
@@ -104,29 +101,31 @@ public class MatchingResultPanel extends JPanel {
 
     private void evaluate() {
         try {
-            Long id = selectedId();
+            Integer id = selectedId();
             if (id == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn đăng ký!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
                 
-            apps.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
+            AdoptionApplication app = apps.findById(id.longValue())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
             
-            List<Pet> petList = pets.findAll();
-            List<FosterFamily> familyList = families.findAll();
+            // Lấy trực tiếp Pet và Family gắn với đơn này thay vì lấy rập khuôn get(0)
+            Pet pet = app.getPet();
+            FosterFamily family = app.getFamily();
             
-            if (petList.isEmpty() || familyList.isEmpty()) {
-                throw new RuntimeException("Dữ liệu thú cưng hoặc gia đình đang trống.");
+            if (pet == null || family == null) {
+                throw new RuntimeException("Đơn đăng ký thiếu thông tin Thú cưng hoặc Gia đình nhận nuôi.");
             }
-            
-            Pet pet = petList.get(0);
-            FosterFamily family = familyList.get(0);
             
             MatchOperator op = (MatchOperator) operator.getSelectedItem();
             
             CriterionResult result = matching.evaluateMatch(pet, family, op);
             
             StringBuilder b = new StringBuilder("MATCHING EVALUATION (ĐÁNH GIÁ GHÉP NỐI)\n=========================================\n");
+            b.append("Mã Đơn: ").append(app.getId())
+             .append(" | Pet ID: ").append(pet.getId())
+             .append(" | Family ID: ").append(family.getId()).append("\n");
             b.append("Quy tắc Logic: ").append(op).append("\n");
             b.append("Kết quả chung: ").append(result.isSatisfied() ? "[ĐẠT - PASS]" : "[TỪ CHỐI - FAIL]").append("\n\n");
             b.append("Giải thích chi tiết từ hệ thống:\n").append(result.getReason()).append("\n");
@@ -139,31 +138,29 @@ public class MatchingResultPanel extends JPanel {
 
     private void confirm() {
         try {
-            Long id = selectedId();
+            Integer id = selectedId();
             if (id == null) {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn đăng ký!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
                 
-            apps.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
+            AdoptionApplication app = apps.findById(id.longValue())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
             
-            List<Pet> petList = pets.findAll();
-            List<FosterFamily> familyList = families.findAll();
+            Pet pet = app.getPet();
+            FosterFamily family = app.getFamily();
             
-            if (petList.isEmpty() || familyList.isEmpty()) {
-                throw new RuntimeException("Không đủ dữ liệu thú cưng hoặc gia đình để bàn giao.");
+            if (pet == null || family == null) {
+                throw new RuntimeException("Đơn đăng ký thiếu thông tin Thú cưng hoặc Gia đình nhận nuôi để bàn giao.");
             }
             
-            Pet pet = petList.get(0);
-            FosterFamily family = familyList.get(0);
+            placement.createPlacement(id.longValue(), pet, family);
             
-            placement.createPlacement(id, pet, family);
-            
-                output.setText("""
-                    PLACEMENT CONFIRMED (ĐÃ BÀN GIAO THÀNH CÔNG!)
-                    =========================================
-                    Thú cưng và Gia đình đã được cập nhật an toàn vào cơ sở dữ liệu.
-                    """);
+            output.setText(String.format("""
+                PLACEMENT CONFIRMED (ĐÃ BÀN GIAO THÀNH CÔNG!)
+                =========================================
+                Thú cưng (ID: %d) và Gia đình (ID: %d) đã được bàn giao an toàn!
+                """, pet.getId(), family.getId()));
             load();
         } catch (RuntimeException e) {
             UiUtil.error(this, e);
