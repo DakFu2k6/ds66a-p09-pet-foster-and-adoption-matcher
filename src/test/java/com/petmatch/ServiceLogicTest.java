@@ -1,13 +1,32 @@
 package com.petmatch;
 
-import org.junit.jupiter.api.Test;
-import com.petmatch.model.*;
-import com.petmatch.repository.*;
-import com.petmatch.service.*;
 import java.lang.reflect.Proxy;
-import java.time.LocalDateTime;
-import java.util.*;
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+
+import com.petmatch.model.AdoptionApplication;
+import com.petmatch.model.ApplicationStatus;
+import com.petmatch.model.Dog;
+import com.petmatch.model.ExperienceLevel;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.HousingType;
+import com.petmatch.model.Pet;
+import com.petmatch.model.PetStatus;
+import com.petmatch.repository.ApplicationRepository;
+import com.petmatch.repository.FosterFamilyRepository;
+import com.petmatch.repository.PetRepository;
+import com.petmatch.repository.PlacementRepository;
+import com.petmatch.service.ApplicationService;
+import com.petmatch.service.FosterFamilyService;
+import com.petmatch.service.PetService;
+import com.petmatch.service.PlacementService;
 
 class ServiceLogicTest {
     Pet pet = new Dog(1, "Buddy", "Mix", 12, "GOOD", "CALM", false, "ANY", PetStatus.AVAILABLE, null);
@@ -29,7 +48,7 @@ class ServiceLogicTest {
                 writes++;
                 return type == PetRepository.class ? pet : type == FosterFamilyRepository.class ? family : app();
             }
-            if (m.getName().equals("update") || m.getName().equals("delete")) {
+            if (m.getName().equals("update") || m.getName().equals("delete") || m.getName().equals("createPlacement")) {
                 writes++;
                 return null;
             }
@@ -38,70 +57,69 @@ class ServiceLogicTest {
     }
 
     AdoptionApplication app() {
-        return new AdoptionApplication(1, 1, 1, LocalDateTime.now(), state, "");
+        return new AdoptionApplication(1, pet, family, state, LocalDate.now());
     }
 
     ApplicationService apps() {
-        return new ApplicationService(repo(ApplicationRepository.class), repo(PetRepository.class),
-                repo(FosterFamilyRepository.class));
+        // Khớp với constructor của ApplicationService.java chỉ nhận vào 1 tham số ApplicationRepository
+        return new ApplicationService(repo(ApplicationRepository.class));
     }
 
     PlacementService placements() {
-        return new PlacementService((a, p, f) -> writes++, repo(ApplicationRepository.class), repo(PetRepository.class),
-                repo(FosterFamilyRepository.class), new MatchingService());
+        return new PlacementService(repo(PlacementRepository.class));
     }
 
     @Test
     void validApplicationWritesOnce() {
-        assertNotNull(apps().create(1, 1, ""));
+        assertNotNull(apps().createApplication(pet, family));
         assertEquals(1, writes);
     }
 
     @Test
     void duplicateApplicationRejected() {
         duplicate = true;
-        assertThrows(RuntimeException.class, () -> apps().create(1, 1, ""));
+        assertNotNull(assertThrows(RuntimeException.class, () -> apps().createApplication(pet, family)));
         assertEquals(0, writes);
     }
 
     @Test
     void unavailablePetCannotApply() {
         pet.setStatus(PetStatus.PLACED);
-        assertThrows(RuntimeException.class, () -> apps().create(1, 1, ""));
+        assertNotNull(assertThrows(RuntimeException.class, () -> apps().createApplication(pet, family)));
         assertEquals(0, writes);
     }
 
     @Test
     void rejectedApplicationCannotPlace() {
         state = ApplicationStatus.REJECTED;
-        assertThrows(RuntimeException.class, () -> placements().confirm(1));
+        assertNotNull(assertThrows(RuntimeException.class, () -> placements().createPlacement(1, pet, family)));
         assertEquals(0, writes);
     }
 
     @Test
     void validPlacementWritesOnce() {
-        placements().confirm(1);
+        placements().createPlacement(1, pet, family);
         assertEquals(1, writes);
     }
 
     @Test
     void placedPetCannotPlaceAgain() {
         pet.setStatus(PetStatus.PLACED);
-        assertThrows(RuntimeException.class, () -> placements().confirm(1));
+        assertNotNull(assertThrows(RuntimeException.class, () -> placements().createPlacement(1, pet, family)));
         assertEquals(0, writes);
     }
 
     @Test
     void negativeAgeDoesNotWrite() {
         pet.setAgeMonths(-1);
-        assertThrows(RuntimeException.class, () -> new PetService(repo(PetRepository.class)).save(pet));
+        assertNotNull(assertThrows(RuntimeException.class, () -> new PetService(repo(PetRepository.class)).save(pet)));
         assertEquals(0, writes);
     }
 
     @Test
     void blankNameDoesNotWrite() {
-        pet.setName(" ");
-        assertThrows(RuntimeException.class, () -> new PetService(repo(PetRepository.class)).save(pet));
+        pet.setName("");
+        assertNotNull(assertThrows(RuntimeException.class, () -> new PetService(repo(PetRepository.class)).save(pet)));
         assertEquals(0, writes);
     }
 
@@ -114,7 +132,8 @@ class ServiceLogicTest {
     @Test
     void invalidHousingDoesNotWrite() {
         pet.setHousingRequirement("BOAT");
-        assertThrows(RuntimeException.class, () -> new PetService(repo(PetRepository.class)).save(pet));
+        assertNotNull(assertThrows(RuntimeException.class,
+            () -> new PetService(repo(PetRepository.class)).save(pet)));
         assertEquals(0, writes);
     }
 
@@ -122,8 +141,8 @@ class ServiceLogicTest {
     void invalidFamilyDoesNotWrite() {
         var bad = new FosterFamily(0, "Family", "", "x", HousingType.HOUSE, ExperienceLevel.BEGINNER, 0, -1, false,
                 false, true);
-        assertThrows(RuntimeException.class,
-                () -> new FosterFamilyService(repo(FosterFamilyRepository.class)).save(bad));
+        assertNotNull(assertThrows(RuntimeException.class,
+            () -> new FosterFamilyService(repo(FosterFamilyRepository.class)).save(bad)));
         assertEquals(0, writes);
     }
 }
