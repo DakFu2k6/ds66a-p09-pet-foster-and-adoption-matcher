@@ -32,44 +32,62 @@ public class FamiliesPanel extends JPanel {
     };
 
     public FamiliesPanel(FosterFamilyService s) {
-        service = s;
+        this.service = s;
         setLayout(new BorderLayout(12, 12));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
         add(UiUtil.pageTitle("Foster families", "Manage household conditions and available capacity"),
                 BorderLayout.NORTH);
+        
         JTable table = new JTable(model);
         table.setRowHeight(28);
         add(new JScrollPane(table), BorderLayout.CENTER);
+        
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton add = new JButton("Add family"), refresh = new JButton("Refresh");
-        UiUtil.styleButton(add);
-        UiUtil.styleButton(refresh);
-        bar.add(add);
-        bar.add(refresh);
+        JButton addBtn = new JButton("Add family");
+        JButton refreshBtn = new JButton("Refresh");
+        
+        UiUtil.styleButton(addBtn);
+        UiUtil.styleButton(refreshBtn);
+        
+        bar.add(addBtn);
+        bar.add(refreshBtn);
         add(bar, BorderLayout.SOUTH);
-        add.addActionListener(e -> addFamily());
-        refresh.addActionListener(e -> load());
+        
+        addBtn.addActionListener(e -> addFamily());
+        refreshBtn.addActionListener(e -> load());
+        
         load();
     }
 
     private void load() {
         try {
             model.setRowCount(0);
-            for (FosterFamily f : service.findAll())
-                model.addRow(new Object[] { f.getId(), f.getFamilyName(), f.getContactName(), f.getPhone(),
-                        f.getHousingType(), f.getExperienceLevel(), f.getCapacity(), f.getActivePetCount(),
-                        f.isHasYard(), f.isActive() });
-        } catch (Exception e) {
+            for (FosterFamily f : service.findAll()) {
+                model.addRow(new Object[] { 
+                    f.getId(), f.getFamilyName(), f.getContactName(), f.getPhone(),
+                    f.getHousingType(), f.getExperienceLevel(), f.getCapacity(), f.getActivePetCount(),
+                    f.isHasYard(), f.isActive() 
+                });
+            }
+        } catch (NumberFormatException e) {
+            UiUtil.error(this, e);
+        } catch (IllegalArgumentException e) {
             UiUtil.error(this, e);
         }
     }
 
     private void addFamily() {
-        JTextField family = new JTextField(), contact = new JTextField(), phone = new JTextField(),
-                capacity = new JTextField("2");
+        JTextField family = new JTextField();
+        JTextField contact = new JTextField();
+        JTextField phone = new JTextField();
+        JTextField capacity = new JTextField("2");
+        
         JComboBox<HousingType> housing = new JComboBox<>(HousingType.values());
         JComboBox<ExperienceLevel> experience = new JComboBox<>(ExperienceLevel.values());
-        JCheckBox yard = new JCheckBox("Has yard"), children = new JCheckBox("Has children");
+        JCheckBox yard = new JCheckBox("Has yard");
+        JCheckBox children = new JCheckBox("Has children");
+        
         JPanel p = new JPanel(new GridLayout(0, 2, 8, 8));
         p.add(new JLabel("Family name"));
         p.add(family);
@@ -85,15 +103,27 @@ public class FamiliesPanel extends JPanel {
         p.add(capacity);
         p.add(yard);
         p.add(children);
+        
         if (JOptionPane.showConfirmDialog(this, p, "Register foster family",
                 JOptionPane.OK_CANCEL_OPTION) != JOptionPane.OK_OPTION)
             return;
+            
         try {
-            service.save(new FosterFamily(0, family.getText().trim(), contact.getText().trim(), phone.getText().trim(),
-                    (HousingType) housing.getSelectedItem(), (ExperienceLevel) experience.getSelectedItem(),
-                    Integer.parseInt(capacity.getText().trim()), 0, yard.isSelected(), children.isSelected(), true));
+            service.save(new FosterFamily(
+                0, 
+                family.getText().trim(), 
+                contact.getText().trim(), 
+                phone.getText().trim(),
+                (HousingType) housing.getSelectedItem(), 
+                (ExperienceLevel) experience.getSelectedItem(),
+                Integer.parseInt(capacity.getText().trim()), 
+                0, 
+                yard.isSelected(), 
+                children.isSelected(), 
+                true
+            ));
             load();
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             UiUtil.error(this, e);
         }
     }
