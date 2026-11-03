@@ -1,9 +1,12 @@
 package com.petmatch.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import com.petmatch.exception.InvalidPetException;
-import com.petmatch.model.*;
+import com.petmatch.model.Pet;
 import com.petmatch.repository.PetRepository;
-import java.util.*;
 
 public class PetService {
     private final PetRepository repository;
@@ -14,6 +17,10 @@ public class PetService {
 
     public List<Pet> findAll() {
         return repository.findAll();
+    }
+
+    public Optional<Pet> findById(long id) {
+        return repository.findById(id);
     }
 
     public Pet save(Pet pet) {
@@ -30,6 +37,7 @@ public class PetService {
             throw new InvalidPetException("Name is too long.");
         if (pet.getCareProfile() != null && pet.getCareProfile().getDailyExerciseMinutes() < 0)
             throw new InvalidPetException("Exercise cannot be negative.");
+        
         if (pet.getId() > 0) {
             repository.update(pet);
             return pet;
