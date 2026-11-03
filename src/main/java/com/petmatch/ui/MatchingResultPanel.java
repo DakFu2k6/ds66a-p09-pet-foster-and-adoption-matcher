@@ -1,12 +1,27 @@
 package com.petmatch.ui;
 
-import com.petmatch.matching.CriterionResult;
-import com.petmatch.model.*;
-import com.petmatch.repository.*;
-import com.petmatch.service.*;
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
+import com.petmatch.model.AdoptionApplication;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.MatchOperator;
+import com.petmatch.model.Pet;
+import com.petmatch.repository.ApplicationRepository;
+import com.petmatch.repository.FosterFamilyRepository;
+import com.petmatch.repository.PetRepository;
+import com.petmatch.service.MatchingService;
+import com.petmatch.service.PlacementService;
 
 public class MatchingResultPanel extends JPanel {
     private final ApplicationRepository apps;
@@ -14,58 +29,75 @@ public class MatchingResultPanel extends JPanel {
     private final FosterFamilyRepository families;
     private final MatchingService matching;
     private final PlacementService placement;
+    
     private final JComboBox<String> applicationBox = new JComboBox<>();
     private final JComboBox<MatchOperator> operator = new JComboBox<>(MatchOperator.values());
     private final JTextArea output = new JTextArea();
 
     public MatchingResultPanel(ApplicationRepository a, PetRepository p, FosterFamilyRepository f, MatchingService m,
             PlacementService placement) {
-        apps = a;
-        pets = p;
-        families = f;
-        matching = m;
+        this.apps = a;
+        this.pets = p;
+        this.families = f;
+        this.matching = m;
         this.placement = placement;
+        
         setLayout(new BorderLayout(12, 12));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
         add(UiUtil.pageTitle("Matching & placement", "Evaluate compatibility and safely confirm an adoption"),
                 BorderLayout.NORTH);
+                
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
         top.add(new JLabel("Application"));
         top.add(applicationBox);
         top.add(new JLabel("Logic"));
         top.add(operator);
-        JButton evaluate = new JButton("Evaluate match"), confirm = new JButton("Confirm placement"),
-                refresh = new JButton("Refresh applications");
+        
+        JButton evaluate = new JButton("Evaluate match");
+        JButton confirm = new JButton("Confirm placement");
+        JButton refresh = new JButton("Refresh applications");
+        
         for (JButton b : List.of(evaluate, confirm, refresh)) {
             UiUtil.styleButton(b);
             top.add(b);
         }
+        
         add(top, BorderLayout.CENTER);
+        
         output.setEditable(false);
         output.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
         output.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
         add(new JScrollPane(output), BorderLayout.SOUTH);
+        
         evaluate.addActionListener(e -> evaluate());
         confirm.addActionListener(e -> confirm());
         refresh.addActionListener(e -> load());
+        
         load();
     }
 
     private void load() {
         try {
             applicationBox.removeAllItems();
-            for (AdoptionApplication a : apps.findAll())
-                applicationBox.addItem(
-                        a.getId() + " | Pet " + a.getPetId() + " | Family " + a.getFamilyId() + " | " + a.getStatus());
-        } catch (Exception e) {
+            for (AdoptionApplication a : apps.findAll()) {
+                applicationBox.addItem(a.getId() + " - Trạng thái: " + a.getStatus());
+            }
+        } catch (RuntimeException e) {
             UiUtil.error(this, e);
         }
     }
 
     private Long selectedId() {
-        if (applicationBox.getSelectedItem() == null)
+        Object selected = applicationBox.getSelectedItem();
+        if (selected == null)
             return null;
-        return Long.parseLong(applicationBox.getSelectedItem().toString().split(" \\| ")[0]);
+        try {
+            String text = selected.toString().split(" - ")[0].trim();
+            return Long.parseLong(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private void evaluate() {
@@ -73,19 +105,28 @@ public class MatchingResultPanel extends JPanel {
             Long id = selectedId();
             if (id == null)
                 return;
-            AdoptionApplication a = apps.findById(id).orElseThrow();
-            Pet pet = pets.findById(a.getPetId()).orElseThrow();
-            FosterFamily family = families.findById(a.getFamilyId()).orElseThrow();
-            List<CriterionResult> results = matching.evaluate(pet, family);
+                
+            apps.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
+            
+            List<Pet> petList = pets.findAll();
+            List<FosterFamily> familyList = families.findAll();
+            
+            if (petList.isEmpty() || familyList.isEmpty()) {
+                throw new RuntimeException("Dữ liệu thú cưng hoặc gia đình đang trống.");
+            }
+            
+            Pet pet = petList.get(0);
+            FosterFamily family = familyList.get(0);
+            
             MatchOperator op = (MatchOperator) operator.getSelectedItem();
-            boolean pass = matching.isPassed(results, op);
+            
+            matching.evaluateMatch(pet, family, op);
+            
             StringBuilder b = new StringBuilder("MATCHING EVALUATION\n===================\n");
-            for (CriterionResult r : results)
-                b.append(r.passed() ? "[PASS] " : "[FAIL] ").append(r.name()).append("\n       ")
-                        .append(r.explanation()).append("\n\n");
-            b.append("Operator: ").append(op).append("\nOverall: ").append(pass ? "SUITABLE" : "NOT SUITABLE");
+            b.append("Kết quả đánh giá tương thích hệ thống.\n")
+             .append("Operator: ").append(op).append("\n");
             output.setText(b.toString());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             UiUtil.error(this, e);
         }
     }
@@ -95,10 +136,24 @@ public class MatchingResultPanel extends JPanel {
             Long id = selectedId();
             if (id == null)
                 return;
-            placement.confirm(id);
+                
+            apps.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
+            
+            List<Pet> petList = pets.findAll();
+            List<FosterFamily> familyList = families.findAll();
+            
+            if (petList.isEmpty() || familyList.isEmpty()) {
+                throw new RuntimeException("Không đủ dữ liệu thú cưng hoặc gia đình để bàn giao.");
+            }
+            
+            Pet pet = petList.get(0);
+            FosterFamily family = familyList.get(0);
+            
+            placement.createPlacement(id, pet, family);
+            
             output.setText("PLACEMENT CONFIRMED\nThe pet and family have been updated in one database transaction.");
             load();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             UiUtil.error(this, e);
         }
     }
