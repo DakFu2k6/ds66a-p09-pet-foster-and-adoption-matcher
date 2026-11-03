@@ -17,6 +17,9 @@ import com.petmatch.model.ApplicationStatus;
 
 public class JdbcApplicationRepository implements ApplicationRepository {
 
+    private final PetRepository petRepository = new JdbcPetRepository();
+    private final FosterFamilyRepository familyRepository = new JdbcFosterFamilyRepository();
+
     private AdoptionApplication mapRow(ResultSet r) throws SQLException {
         AdoptionApplication app = new AdoptionApplication();
         app.setId(r.getInt("application_id"));
@@ -26,6 +29,13 @@ public class JdbcApplicationRepository implements ApplicationRepository {
         if (sqlDate != null) {
             app.setApplicationDate(sqlDate.toLocalDate());
         }
+
+        long petId = r.getLong("pet_id");
+        long familyId = r.getLong("family_id");
+
+        petRepository.findById(petId).ifPresent(app::setPet);
+        familyRepository.findById(familyId).ifPresent(app::setFamily);
+
         return app;
     }
 
@@ -47,6 +57,10 @@ public class JdbcApplicationRepository implements ApplicationRepository {
                     app.setId((int) r.getLong(1));
                     app.setStatus(ApplicationStatus.valueOf(status));
                     app.setApplicationDate(LocalDate.now());
+                    
+                    petRepository.findById(petId).ifPresent(app::setPet);
+                    familyRepository.findById(familyId).ifPresent(app::setFamily);
+                    
                     return app;
                 }
             }
