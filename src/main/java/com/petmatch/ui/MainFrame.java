@@ -26,7 +26,7 @@ import com.petmatch.service.PlacementService;
 public class MainFrame extends JFrame {
     
     public MainFrame() {
-        setTitle("PetMatch | Foster & Adoption Manager");
+        setTitle("PetMatch | Hệ Thống Quản Lý Nhận Nuôi Thú Cưng (Project G9)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1180, 760);
         setMinimumSize(new Dimension(950, 650));
@@ -45,15 +45,15 @@ public class MainFrame extends JFrame {
         PlacementService placementService = new PlacementService(placements);
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Overview", new DashboardPanel(pets, families, apps));
-        tabs.addTab("Pets", new PetsPanel(petService));
-        tabs.addTab("Foster Families", new FamiliesPanel(familyService));
-        tabs.addTab("Applications", new ApplicationsPanel(applicationService));
-        tabs.addTab("Matching & Placement", new MatchingResultPanel(apps, pets, families, matchingService, placementService));
+        tabs.addTab("Tổng quan", new DashboardPanel(pets, families, apps));
+        tabs.addTab("Thú cưng", new PetsPanel(petService));
+        tabs.addTab("Gia đình nhận nuôi", new FamiliesPanel(familyService));
+        tabs.addTab("Đơn đăng ký", new ApplicationsPanel(applicationService));
+        tabs.addTab("Ghép nối & Bàn giao", new MatchingResultPanel(apps, pets, families, matchingService, placementService));
 
         add(tabs, BorderLayout.CENTER);
 
-        JLabel footer = new JLabel("  PETMATCH  •  Java 17 / Swing / MySQL");
+        JLabel footer = new JLabel("  PETMATCH  •  Java 17 / Swing / PostgreSQL");
         footer.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
         footer.setForeground(new Color(100, 115, 106));
         add(footer, BorderLayout.SOUTH);
