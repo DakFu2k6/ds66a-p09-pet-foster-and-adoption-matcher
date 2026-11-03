@@ -28,13 +28,13 @@ public class DashboardPanel extends JPanel {
         setLayout(new BorderLayout(16, 16));
         setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
         
-        add(UiUtil.pageTitle("Shelter overview", "A quick view of the adoption workflow"), BorderLayout.NORTH);
+        add(UiUtil.pageTitle("TỔNG QUAN HỆ THỐNG", "Theo dõi nhanh số liệu và tiến trình nhận nuôi"), BorderLayout.NORTH);
         
         summary.setFont(new Font("SansSerif", Font.PLAIN, 18));
         summary.setVerticalAlignment(SwingConstants.TOP);
         add(summary, BorderLayout.CENTER);
         
-        JButton refresh = new JButton("Refresh overview");
+        JButton refresh = new JButton("Làm mới dữ liệu");
         UiUtil.styleButton(refresh);
         refresh.addActionListener(e -> load());
         
@@ -51,13 +51,13 @@ public class DashboardPanel extends JPanel {
             int familyCount = families.findAll().size();
             int appCount = apps.findAll().size();
             
-            summary.setText("<html><div style='font-size:16px;color:#62736a'>LIVE SYSTEM SUMMARY</div><br>"
-                    + "<b>Available pets:</b> " + available + "<br><br><b>Registered foster families:</b> "
-                    + familyCount
-                    + "<br><br><b>Adoption applications:</b> " + appCount + "<br><br>"
-                    + "<span style='color:#2a705e'>Next step:</span> create an application, evaluate matching and confirm a valid placement.</html>");
+            summary.setText("<html><div style='font-size:16px;color:#62736a'>TÓM TẮT DỮ LIỆU TRỰC TIẾP (LIVE SUMMARY)</div><br>"
+                    + "<b>Thú cưng đang chờ nhận nuôi:</b> " + available + "<br><br>"
+                    + "<b>Gia đình Foster đã đăng ký:</b> " + familyCount + "<br><br>"
+                    + "<b>Tổng số đơn đăng ký nhận nuôi:</b> " + appCount + "<br><br>"
+                    + "<span style='color:#2a705e'>Bước tiếp theo:</span> Tạo đơn đăng ký mới, đánh giá độ phù hợp và xác nhận bàn giao.</html>");
         } catch (Exception ex) {
-            summary.setText("Could not load dashboard: " + ex.getMessage());
+            summary.setText("Không thể tải dữ liệu tổng quan: " + ex.getMessage());
         }
     }
 }
