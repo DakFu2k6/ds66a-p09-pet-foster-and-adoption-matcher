@@ -94,7 +94,7 @@ public class MatchingResultPanel extends JPanel {
             return null;
         try {
             String text = selected.toString().split(" - ")[0].trim();
-            return Long.parseLong(text);
+            return Long.valueOf(text);
         } catch (NumberFormatException e) {
             return null;
         }
