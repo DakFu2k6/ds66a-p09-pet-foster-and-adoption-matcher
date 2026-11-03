@@ -12,7 +12,13 @@ import com.petmatch.model.Pet;
 public class MatchingService {
 
     public CriterionResult evaluateMatch(Pet pet, FosterFamily family, MatchOperator operator) {
-        CriterionGroup group = new CriterionGroup(operator);
+        if (pet == null || family == null) {
+            throw new IllegalArgumentException("Thú cưng và gia đình nhận nuôi không được để trống khi đánh giá ghép nối.");
+        }
+
+        MatchOperator op = (operator != null) ? operator : MatchOperator.AND;
+        
+        CriterionGroup group = new CriterionGroup(op);
         
         group.addCriterion(new CapacityCriterion());
         group.addCriterion(new HousingCriterion());
