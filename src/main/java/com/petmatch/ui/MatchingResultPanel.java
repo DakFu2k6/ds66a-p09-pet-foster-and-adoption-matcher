@@ -9,10 +9,12 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import com.petmatch.matching.CriterionResult;
 import com.petmatch.model.AdoptionApplication;
 import com.petmatch.model.FosterFamily;
 import com.petmatch.model.MatchOperator;
@@ -45,18 +47,18 @@ public class MatchingResultPanel extends JPanel {
         setLayout(new BorderLayout(12, 12));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        add(UiUtil.pageTitle("Matching & placement", "Evaluate compatibility and safely confirm an adoption"),
+        add(UiUtil.pageTitle("QUẢN LÝ GHÉP NỐI & BÀN GIAO", "Đánh giá mức độ phù hợp và xác nhận bàn giao an toàn"),
                 BorderLayout.NORTH);
                 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        top.add(new JLabel("Application"));
+        top.add(new JLabel("Chọn Đơn:"));
         top.add(applicationBox);
-        top.add(new JLabel("Logic"));
+        top.add(new JLabel("Tiêu chí (Logic):"));
         top.add(operator);
         
-        JButton evaluate = new JButton("Evaluate match");
-        JButton confirm = new JButton("Confirm placement");
-        JButton refresh = new JButton("Refresh applications");
+        JButton evaluate = new JButton("Đánh giá độ phù hợp");
+        JButton confirm = new JButton("Xác nhận bàn giao");
+        JButton refresh = new JButton("Làm mới danh sách");
         
         for (JButton b : List.of(evaluate, confirm, refresh)) {
             UiUtil.styleButton(b);
@@ -103,8 +105,10 @@ public class MatchingResultPanel extends JPanel {
     private void evaluate() {
         try {
             Long id = selectedId();
-            if (id == null)
+            if (id == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn đăng ký!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
+            }
                 
             apps.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
             
@@ -120,11 +124,13 @@ public class MatchingResultPanel extends JPanel {
             
             MatchOperator op = (MatchOperator) operator.getSelectedItem();
             
-            matching.evaluateMatch(pet, family, op);
+            CriterionResult result = matching.evaluateMatch(pet, family, op);
             
-            StringBuilder b = new StringBuilder("MATCHING EVALUATION\n===================\n");
-            b.append("Kết quả đánh giá tương thích hệ thống.\n")
-             .append("Operator: ").append(op).append("\n");
+            StringBuilder b = new StringBuilder("MATCHING EVALUATION (ĐÁNH GIÁ GHÉP NỐI)\n=========================================\n");
+            b.append("Quy tắc Logic: ").append(op).append("\n");
+            b.append("Kết quả chung: ").append(result.isSatisfied() ? "[ĐẠT - PASS]" : "[TỪ CHỐI - FAIL]").append("\n\n");
+            b.append("Giải thích chi tiết từ hệ thống:\n").append(result.getReason()).append("\n");
+            
             output.setText(b.toString());
         } catch (RuntimeException e) {
             UiUtil.error(this, e);
@@ -134,8 +140,10 @@ public class MatchingResultPanel extends JPanel {
     private void confirm() {
         try {
             Long id = selectedId();
-            if (id == null)
+            if (id == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một đơn đăng ký!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
                 return;
+            }
                 
             apps.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy đơn đăng ký"));
             
@@ -151,7 +159,11 @@ public class MatchingResultPanel extends JPanel {
             
             placement.createPlacement(id, pet, family);
             
-            output.setText("PLACEMENT CONFIRMED\nThe pet and family have been updated in one database transaction.");
+                output.setText("""
+                    PLACEMENT CONFIRMED (ĐÃ BÀN GIAO THÀNH CÔNG!)
+                    =========================================
+                    Thú cưng và Gia đình đã được cập nhật an toàn vào cơ sở dữ liệu.
+                    """);
             load();
         } catch (RuntimeException e) {
             UiUtil.error(this, e);
