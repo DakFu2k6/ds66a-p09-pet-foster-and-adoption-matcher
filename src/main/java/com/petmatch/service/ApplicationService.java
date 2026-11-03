@@ -37,7 +37,7 @@ public class ApplicationService {
         return applicationRepository.findAll();
     }
 
-    public void updateApplicationStatus(Integer id, ApplicationStatus newStatus) {
+    public void updateApplicationStatus(long id, ApplicationStatus newStatus) {
         Optional<AdoptionApplication> optionalApp = applicationRepository.findById(id);
         AdoptionApplication app = optionalApp.orElseThrow(() ->
             new InvalidApplicationException("Không tìm thấy tờ đơn có mã số: " + id)
