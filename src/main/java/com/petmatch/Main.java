@@ -17,9 +17,11 @@ public class Main {
         } catch (SQLException ex) {
             String message = DatabaseDiagnostics.explain(ex);
             System.err.println(message);
-            if (!java.awt.GraphicsEnvironment.isHeadless())
-                JOptionPane.showMessageDialog(null, message, "Database error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1);
+            
+            if (!java.awt.GraphicsEnvironment.isHeadless()) {
+                JOptionPane.showMessageDialog(null, message, "Lỗi kết nối Cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
+            }
+            System.exit(1); 
             return;
         }
         
@@ -29,16 +31,18 @@ public class Main {
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
                      javax.swing.UnsupportedLookAndFeelException ignored) {
             }
+            
             try {
                 new MainFrame().setVisible(true);
             } catch (Exception ex) {
                 String errorMsg = """
-                    Cannot connect to MySQL. Check .env / application.properties / environment variables
+                    Không thể kết nối đến cơ sở dữ liệu PostgreSQL. Vui lòng kiểm tra lại cấu hình .env / application.properties / biến môi trường
                     (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD).
 
+                    Chi tiết lỗi:
                     """ + DatabaseDiagnostics.explain(ex);
 
-                JOptionPane.showMessageDialog(null, errorMsg, "Database connection error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, errorMsg, "Lỗi khởi chạy hệ thống", JOptionPane.ERROR_MESSAGE);
             }
         });
     }
