@@ -87,10 +87,14 @@ public class FamiliesPanel extends JPanel {
         addBtn.addActionListener(e -> addFamily());
         refreshBtn.addActionListener(e -> load());
 
-        load();
+        loadFamilies();
     }
 
     public void load() {
+        loadFamilies();
+    }
+
+    private void loadFamilies() {
         try {
             model.setRowCount(0);
             for (FosterFamily f : service.findAll()) {
