@@ -6,7 +6,7 @@ try:
         cursor=connection.cursor()
         cursor.execute("SELECT VERSION(),DATABASE()")
         print("Connected:",cursor.fetchone())
-        for table in ("pets","care_profiles","foster_families","applications","placements","matching_results","matching_criteria_results"):
+        for table in ("pets","care_profiles","foster_families","applications","placements","matching_results","matching_criteria_results","staff_users","match_criteria"):
             cursor.execute(f"SELECT COUNT(*) FROM {table}")
             print(table,cursor.fetchone()[0])
 except Exception as error:
