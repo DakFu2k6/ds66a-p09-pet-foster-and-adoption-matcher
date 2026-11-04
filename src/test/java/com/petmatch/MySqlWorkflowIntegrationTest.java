@@ -1,20 +1,38 @@
 package com.petmatch;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.sql.SQLException;
+
+import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import com.petmatch.config.DatabaseConnection;
-import com.petmatch.model.*;
-import com.petmatch.repository.*;
-import com.petmatch.service.*;
-import java.sql.*;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import com.petmatch.model.CareProfile;
+import com.petmatch.model.Dog;
+import com.petmatch.model.ExperienceLevel;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.HousingType;
+import com.petmatch.model.MatchOperator;
+import com.petmatch.model.PetStatus;
+import com.petmatch.repository.JdbcApplicationRepository;
+import com.petmatch.repository.JdbcCriteriaRepository;
+import com.petmatch.repository.JdbcEvaluationRepository;
+import com.petmatch.repository.JdbcFosterFamilyRepository;
+import com.petmatch.repository.JdbcPetRepository;
+import com.petmatch.repository.JdbcPlacementRepository;
+import com.petmatch.service.ApplicationService;
 
 @EnabledIfEnvironmentVariable(named = "PETMATCH_MYSQL_TEST", matches = "true")
 class MySqlWorkflowIntegrationTest {
     long pet, family, application;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setup() throws Exception {
         try (var c = DatabaseConnection.getConnection()) {
             assertTrue(c.getCatalog().endsWith("_test"), "Only isolated _test database allowed");
@@ -52,6 +70,7 @@ class MySqlWorkflowIntegrationTest {
     }
 
     @AfterEach
+    @SuppressWarnings("unused")
     void cleanup() throws Exception {
         try (var c = DatabaseConnection.getConnection();
                 var q = c.createStatement()) {
@@ -88,9 +107,10 @@ class MySqlWorkflowIntegrationTest {
         var p = repo.findById(pet).orElseThrow();
         p.setHousingRequirement("APARTMENT");
         repo.update(p);
-        assertThrows(
+        var exception = assertThrows(
                 RuntimeException.class,
                 () -> new JdbcPlacementRepository().createPlacement(application, pet, family));
+        assertNotNull(exception);
         assertEquals(0, count("SELECT COUNT(*) FROM placements WHERE pet_id=" + pet));
         assertEquals(
                 0, count("SELECT active_pet_count FROM foster_families WHERE family_id=" + family));
@@ -104,7 +124,8 @@ class MySqlWorkflowIntegrationTest {
                 var q = c.prepareStatement("INSERT INTO applications(pet_id,family_id) VALUES(?,?)")) {
             q.setLong(1, pet);
             q.setLong(2, family);
-            assertThrows(SQLException.class, q::executeUpdate);
+            var exception = assertThrows(SQLException.class, q::executeUpdate);
+            assertNotNull(exception.getMessage());
         }
         assertEquals(
                 1, count("SELECT active_pet_count FROM foster_families WHERE family_id=" + family));
@@ -124,7 +145,8 @@ class MySqlWorkflowIntegrationTest {
         var repo = new JdbcPetRepository();
         var stale = repo.findById(pet).orElseThrow();
         new JdbcPlacementRepository().createPlacement(application, pet, family);
-        assertThrows(RuntimeException.class, () -> repo.update(stale));
+        var exception = assertThrows(RuntimeException.class, () -> repo.update(stale));
+        assertNotNull(exception);
         assertEquals(PetStatus.PLACED, repo.findById(pet).orElseThrow().getStatus());
     }
 }

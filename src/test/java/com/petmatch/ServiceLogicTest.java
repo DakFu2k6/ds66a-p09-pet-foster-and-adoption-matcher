@@ -1,9 +1,15 @@
 package com.petmatch;
 
+import java.lang.reflect.Proxy;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 import com.petmatch.model.AdoptionApplication;
 import com.petmatch.model.ApplicationStatus;
@@ -21,11 +27,6 @@ import com.petmatch.service.ApplicationService;
 import com.petmatch.service.FosterFamilyService;
 import com.petmatch.service.PetService;
 import com.petmatch.service.PlacementService;
-import java.lang.reflect.Proxy;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
 
 class ServiceLogicTest {
     Pet pet = new Dog(1, "Buddy", "Mix", 12, "GOOD", "CALM", false, "ANY", PetStatus.AVAILABLE, null);
@@ -80,8 +81,6 @@ class ServiceLogicTest {
     }
 
     ApplicationService apps() {
-        // Khớp với constructor của ApplicationService.java chỉ nhận vào 1 tham số
-        // ApplicationRepository
         return new ApplicationService(repo(ApplicationRepository.class));
     }
 
@@ -190,30 +189,30 @@ class ServiceLogicTest {
     @Test
     void finalApplicationCannotBeApproved() {
         state = ApplicationStatus.PLACED;
-        assertThrows(
+        assertNotNull(assertThrows(
                 RuntimeException.class,
-                () -> apps().updateApplicationStatus(1, ApplicationStatus.APPROVED));
+            () -> apps().updateApplicationStatus(1, ApplicationStatus.APPROVED)));
         assertEquals(0, writes);
     }
 
     @Test
     void callerCannotSetPlacedDirectly() {
-        assertThrows(
-                RuntimeException.class, () -> apps().updateApplicationStatus(1, ApplicationStatus.PLACED));
+        assertNotNull(assertThrows(
+            RuntimeException.class, () -> apps().updateApplicationStatus(1, ApplicationStatus.PLACED)));
         assertEquals(0, writes);
     }
 
     @Test
     void inactiveFamilyCannotApply() {
         family.setActive(false);
-        assertThrows(RuntimeException.class, () -> apps().createApplication(pet, family));
+        assertNotNull(assertThrows(RuntimeException.class, () -> apps().createApplication(pet, family)));
         assertEquals(0, writes);
     }
 
     @Test
     void committedFamilyCannotPlaceDespiteSpareCapacity() {
         family.setActivePetCount(1);
-        assertThrows(RuntimeException.class, () -> placements().createPlacement(1, pet, family));
+        assertNotNull(assertThrows(RuntimeException.class, () -> placements().createPlacement(1, pet, family)));
         assertEquals(0, writes);
     }
 
@@ -221,9 +220,9 @@ class ServiceLogicTest {
     void failedStrictMatchCannotBeApproved() {
         pet.setSpecialCareRequired(true);
         family.setExperienceLevel(ExperienceLevel.BEGINNER);
-        assertThrows(
+        assertNotNull(assertThrows(
                 RuntimeException.class,
-                () -> apps().updateApplicationStatus(1, ApplicationStatus.APPROVED));
+            () -> apps().updateApplicationStatus(1, ApplicationStatus.APPROVED)));
         assertEquals(0, writes);
     }
 }

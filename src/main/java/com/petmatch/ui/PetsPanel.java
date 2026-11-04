@@ -76,7 +76,7 @@ public class PetsPanel extends JPanel {
         load();
     }
 
-    public void load() {
+    public final void load() {
         try {
             model.setRowCount(0);
             for (Pet p : service.findAll()) {

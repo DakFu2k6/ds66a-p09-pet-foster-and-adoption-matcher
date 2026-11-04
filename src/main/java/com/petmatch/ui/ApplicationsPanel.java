@@ -102,10 +102,14 @@ public class ApplicationsPanel extends JPanel {
 
         add(bottomPanel, BorderLayout.SOUTH);
 
-        loadApplicationsData();
+        loadApplicationsDataInternal();
     }
 
     public void loadApplicationsData() {
+        loadApplicationsDataInternal();
+    }
+
+    private void loadApplicationsDataInternal() {
         tableModel.setRowCount(0);
         try {
             List<AdoptionApplication> list = applicationService.getAllApplications();

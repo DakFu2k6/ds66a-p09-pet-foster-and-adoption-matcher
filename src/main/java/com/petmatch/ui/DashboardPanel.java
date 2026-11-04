@@ -1,16 +1,29 @@
 package com.petmatch.ui;
 
-import com.petmatch.config.DatabaseConnection;
-import com.petmatch.repository.*;
-import java.awt.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridLayout;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+
+import com.petmatch.config.DatabaseConnection;
+import com.petmatch.repository.ApplicationRepository;
+import com.petmatch.repository.FosterFamilyRepository;
+import com.petmatch.repository.PetRepository;
 
 public class DashboardPanel extends JPanel {
     private final JLabel[] values = new JLabel[4];
     private final JLabel status = new JLabel(" ");
     private final DefaultTableModel rows = new DefaultTableModel(
             new Object[] { "Placement", "Pet", "Family", "Application", "Date", "Status" }, 0) {
+        @Override
         public boolean isCellEditable(int row, int col) {
             return false;
         }
@@ -53,10 +66,14 @@ public class DashboardPanel extends JPanel {
         bottom.add(reload, BorderLayout.WEST);
         bottom.add(status);
         add(bottom, BorderLayout.SOUTH);
-        load();
+        loadDashboard();
     }
 
     public void load() {
+        loadDashboard();
+    }
+
+    private void loadDashboard() {
         try (var c = DatabaseConnection.getConnection()) {
             try (var q = c.prepareStatement("SELECT * FROM v_dashboard_summary");
                     var rs = q.executeQuery()) {

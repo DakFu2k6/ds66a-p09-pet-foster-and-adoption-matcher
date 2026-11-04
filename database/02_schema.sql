@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS pet_matcher_db;
 USE pet_matcher_db;
 
 CREATE TABLE IF NOT EXISTS pets (
@@ -8,7 +9,7 @@ CREATE TABLE IF NOT EXISTS pets (
     age_months INT NOT NULL,
     health_status VARCHAR(30) NOT NULL DEFAULT 'GOOD',
     temperament VARCHAR(30) NOT NULL DEFAULT 'FRIENDLY',
-    special_care_required BOOLEAN NOT NULL DEFAULT FALSE,
+    special_care VARCHAR(50) DEFAULT 'Không', 
     housing_requirement VARCHAR(30) NOT NULL DEFAULT 'ANY',
     status VARCHAR(30) NOT NULL DEFAULT 'AVAILABLE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS foster_families (
     active_pet_count INT NOT NULL DEFAULT 0,
     has_yard BOOLEAN NOT NULL DEFAULT FALSE,
     has_children BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(30) NOT NULL DEFAULT 'Đang mở',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_family_capacity CHECK (capacity > 0),
@@ -54,15 +56,6 @@ CREATE TABLE IF NOT EXISTS applications (
     notes TEXT,
     CONSTRAINT fk_application_pet FOREIGN KEY (pet_id) REFERENCES pets (pet_id),
     CONSTRAINT fk_application_family FOREIGN KEY (family_id) REFERENCES foster_families (family_id),
-    CONSTRAINT chk_application_status CHECK (
-        status IN (
-            'PENDING',
-            'APPROVED',
-            'REJECTED',
-            'CANCELLED',
-            'PLACED'
-        )
-    ),
     INDEX idx_applications_pet (pet_id),
     INDEX idx_applications_family (family_id)
 ) ENGINE = InnoDB;
@@ -75,9 +68,7 @@ CREATE TABLE IF NOT EXISTS matching_results (
     summary TEXT,
     evaluated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_mr_application FOREIGN KEY (application_id) REFERENCES applications (application_id) ON DELETE CASCADE,
-    CONSTRAINT chk_mr_operator CHECK (
-        logic_operator IN ('AND', 'OR')
-    )
+    CONSTRAINT chk_mr_operator CHECK (logic_operator IN ('AND', 'OR'))
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS matching_criteria_results (
@@ -98,12 +89,5 @@ CREATE TABLE IF NOT EXISTS placements (
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     CONSTRAINT fk_placement_application FOREIGN KEY (application_id) REFERENCES applications (application_id),
     CONSTRAINT fk_placement_pet FOREIGN KEY (pet_id) REFERENCES pets (pet_id),
-    CONSTRAINT fk_placement_family FOREIGN KEY (family_id) REFERENCES foster_families (family_id),
-    CONSTRAINT chk_placement_status CHECK (
-        status IN (
-            'ACTIVE',
-            'COMPLETED',
-            'CANCELLED'
-        )
-    )
+    CONSTRAINT fk_placement_family FOREIGN KEY (family_id) REFERENCES foster_families (family_id)
 ) ENGINE = InnoDB;

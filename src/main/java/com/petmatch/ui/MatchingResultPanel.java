@@ -1,5 +1,19 @@
 package com.petmatch.ui;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.util.List;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
 import com.petmatch.matching.CriterionResult;
 import com.petmatch.model.AdoptionApplication;
 import com.petmatch.model.FosterFamily;
@@ -10,18 +24,6 @@ import com.petmatch.repository.FosterFamilyRepository;
 import com.petmatch.repository.PetRepository;
 import com.petmatch.service.MatchingService;
 import com.petmatch.service.PlacementService;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.util.List;
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 
 public class MatchingResultPanel extends JPanel {
     private final ApplicationRepository apps;
@@ -92,10 +94,14 @@ public class MatchingResultPanel extends JPanel {
         refresh.addActionListener(e -> load());
 
         top.add(new JLabel("AND/OR: care criteria only. Handover always requires AND."));
-        load();
+        loadApplications();
     }
 
     public void load() {
+        loadApplications();
+    }
+
+    private void loadApplications() {
         try {
             applicationBox.removeAllItems();
             for (AdoptionApplication a : apps.findAll()) {
@@ -145,9 +151,11 @@ public class MatchingResultPanel extends JPanel {
             CriterionResult result = matching.evaluateMatch(pet, family, op);
             com.petmatch.repository.JdbcEvaluationRepository.record(id, op, pet, family);
 
-            StringBuilder b = new StringBuilder(
-                    "MATCHING EVALUATION (ĐÁNH GIÁ GHÉP NỐI)\n"
-                            + "=========================================\n");
+                StringBuilder b = new StringBuilder(
+                    """
+                        MATCHING EVALUATION (ĐÁNH GIÁ GHÉP NỐI)
+                        =========================================
+                        """);
             b.append("Mã Đơn: ")
                     .append(app.getId())
                     .append(" | Pet ID: ")

@@ -1,13 +1,31 @@
 package com.petmatch;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.petmatch.matching.*;
-import com.petmatch.model.*;
-import com.petmatch.service.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+
+import com.petmatch.matching.CapacityCriterion;
+import com.petmatch.matching.CriterionGroup;
+import com.petmatch.matching.CriterionResult;
+import com.petmatch.matching.ExperienceCriterion;
+import com.petmatch.matching.HouseholdCriterion;
+import com.petmatch.matching.HousingCriterion;
+import com.petmatch.model.CareProfile;
+import com.petmatch.model.Cat;
+import com.petmatch.model.Dog;
+import com.petmatch.model.ExperienceLevel;
+import com.petmatch.model.FosterFamily;
+import com.petmatch.model.HousingType;
+import com.petmatch.model.MatchOperator;
+import com.petmatch.model.Pet;
+import com.petmatch.model.PetStatus;
+import com.petmatch.service.MatchingService;
+import com.petmatch.service.PasswordHasher;
 
 class WorkflowRegressionTest {
     Pet dog(boolean special, String housing) {
@@ -165,9 +183,10 @@ class WorkflowRegressionTest {
 
     @Test
     void missingInputsRejected() {
-        assertThrows(
+        var exception = assertThrows(
                 IllegalArgumentException.class,
                 () -> new MatchingService().evaluateMatch(null, family(), MatchOperator.AND));
+        assertEquals(IllegalArgumentException.class, exception.getClass());
     }
 
     @Test

@@ -1,8 +1,21 @@
 package com.petmatch.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
+import java.util.concurrent.ExecutionException;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import javax.swing.SwingWorker;
+
 import com.petmatch.service.AuthService;
-import java.awt.*;
-import javax.swing.*;
 
 public final class LoginFrame extends JFrame {
     private final JTextField username = new JTextField(22);
@@ -37,10 +50,12 @@ public final class LoginFrame extends JFrame {
                     password.setText("");
                     login.setEnabled(false);
                     new SwingWorker<String, Void>() {
+                        @Override
                         protected String doInBackground() {
                             return new AuthService().login(user, secret);
                         }
 
+                        @Override
                         protected void done() {
                             try {
                                 String name = get();
@@ -50,7 +65,7 @@ public final class LoginFrame extends JFrame {
                                     new MainFrame(name).setVisible(true);
                                     dispose();
                                 }
-                            } catch (Exception ex) {
+                            } catch (InterruptedException | ExecutionException ex) {
                                 UiUtil.error(LoginFrame.this, ex);
                             } finally {
                                 login.setEnabled(true);
