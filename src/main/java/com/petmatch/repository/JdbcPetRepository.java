@@ -1,5 +1,12 @@
 package com.petmatch.repository;
 
+import com.petmatch.config.DatabaseConnection;
+import com.petmatch.model.CareProfile;
+import com.petmatch.model.Cat;
+import com.petmatch.model.Dog;
+import com.petmatch.model.Pet;
+import com.petmatch.model.PetStatus;
+import com.petmatch.model.PetType;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,17 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.petmatch.config.DatabaseConnection;
-import com.petmatch.model.CareProfile;
-import com.petmatch.model.Cat;
-import com.petmatch.model.Dog;
-import com.petmatch.model.Pet;
-import com.petmatch.model.PetStatus;
-import com.petmatch.model.PetType;
-
 public class JdbcPetRepository implements PetRepository {
 
-    private Pet mapRow(ResultSet rs) throws SQLException {
+    static Pet mapRow(ResultSet rs) throws SQLException {
         long id = rs.getLong("pet_id");
         String name = rs.getString("name");
         String breed = rs.getString("breed");
@@ -34,30 +33,49 @@ public class JdbcPetRepository implements PetRepository {
         CareProfile care = null;
         if (rs.getObject("care_profile_id") != null) {
             care = new CareProfile(
-                rs.getLong("care_profile_id"),
-                rs.getInt("daily_exercise_minutes"),
-                rs.getString("feeding_notes"),
-                rs.getString("medical_notes")
-            );
+                    rs.getLong("care_profile_id"),
+                    rs.getInt("daily_exercise_minutes"),
+                    rs.getString("feeding_notes"),
+                    rs.getString("medical_notes"));
         }
 
         if ("DOG".equalsIgnoreCase(species) || PetType.DOG.name().equalsIgnoreCase(species)) {
-            return new Dog(id, name, breed, ageMonths, healthStatus, temperament, specialCare, housingReq, status, care);
+            return new Dog(
+                    id,
+                    name,
+                    breed,
+                    ageMonths,
+                    healthStatus,
+                    temperament,
+                    specialCare,
+                    housingReq,
+                    status,
+                    care);
         } else {
-            return new Cat(id, name, breed, ageMonths, healthStatus, temperament, specialCare, housingReq, status, care);
+            return new Cat(
+                    id,
+                    name,
+                    breed,
+                    ageMonths,
+                    healthStatus,
+                    temperament,
+                    specialCare,
+                    housingReq,
+                    status,
+                    care);
         }
     }
 
     @Override
     public List<Pet> findAll() {
-        String sql = "SELECT p.*, c.care_profile_id, c.daily_exercise_minutes, c.feeding_notes, c.medical_notes " +
-                     "FROM pets p LEFT JOIN care_profiles c ON c.pet_id = p.pet_id ORDER BY p.pet_id DESC";
-        
+        String sql = "SELECT p.*, c.care_profile_id, c.daily_exercise_minutes, c.feeding_notes, c.medical_notes "
+                + "FROM pets p LEFT JOIN care_profiles c ON c.pet_id = p.pet_id ORDER BY p.pet_id DESC";
+
         List<Pet> list = new ArrayList<>();
         try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            
+                PreparedStatement ps = c.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
             while (rs.next()) {
                 list.add(mapRow(rs));
             }
@@ -69,12 +87,12 @@ public class JdbcPetRepository implements PetRepository {
 
     @Override
     public Optional<Pet> findById(long id) {
-        String sql = "SELECT p.*, c.care_profile_id, c.daily_exercise_minutes, c.feeding_notes, c.medical_notes " +
-                     "FROM pets p LEFT JOIN care_profiles c ON c.pet_id = p.pet_id WHERE p.pet_id = ?";
-        
+        String sql = "SELECT p.*, c.care_profile_id, c.daily_exercise_minutes, c.feeding_notes, c.medical_notes "
+                + "FROM pets p LEFT JOIN care_profiles c ON c.pet_id = p.pet_id WHERE p.pet_id = ?";
+
         try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            
+                PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -89,20 +107,30 @@ public class JdbcPetRepository implements PetRepository {
 
     @Override
     public Pet save(Pet p) {
-        String sql = "INSERT INTO pets(name, species, breed, age_months, health_status, temperament, special_care_required, housing_requirement, status) VALUES(?,?,?,?,?,?,?,?,?)";
-        
+        String sql = "INSERT INTO pets(name, species, breed, age_months, health_status, temperament,"
+                + " special_care_required, housing_requirement, status) VALUES(?,?,?,?,?,?,?,?,?)";
+
         try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            
-            bind(ps, p);
-            ps.executeUpdate();
-            
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    p.setId(rs.getLong(1));
-                    return p;
+                PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            c.setAutoCommit(false);
+            try {
+                bind(ps, p);
+                ps.executeUpdate();
+
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        p.setId(rs.getLong(1));
+                        saveCare(c, p);
+                        c.commit();
+                        return p;
+                    }
+                    throw new SQLException("Không thể lấy ID tự tăng sau khi lưu thú cưng.");
                 }
-                throw new SQLException("Không thể lấy ID tự tăng sau khi lưu thú cưng.");
+            } catch (SQLException | RuntimeException ex) {
+                c.rollback();
+                p.setId(0);
+                throw ex;
             }
         } catch (SQLException e) {
             throw new RuntimeException("Không thể lưu thông tin thú cưng", e);
@@ -111,19 +139,50 @@ public class JdbcPetRepository implements PetRepository {
 
     @Override
     public void update(Pet p) {
-        String sql = "UPDATE pets SET name=?, species=?, breed=?, age_months=?, health_status=?, temperament=?, special_care_required=?, housing_requirement=?, status=? WHERE pet_id=?";
-        
+        String sql = "UPDATE pets SET name=?, species=?, breed=?, age_months=?, health_status=?, temperament=?,"
+                + " special_care_required=?, housing_requirement=?, status=? WHERE pet_id=? AND status"
+                + " <> 'PLACED'";
+
         try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            
-            bind(ps, p);
-            ps.setLong(10, p.getId());
-            
-            if (ps.executeUpdate() == 0) {
-                throw new RuntimeException("Không tìm thấy thú cưng để cập nhật.");
+                PreparedStatement ps = c.prepareStatement(sql)) {
+
+            c.setAutoCommit(false);
+            try {
+                bind(ps, p);
+                ps.setLong(10, p.getId());
+
+                if (ps.executeUpdate() == 0) {
+                    throw new RuntimeException("Không tìm thấy thú cưng để cập nhật.");
+                }
+                saveCare(c, p);
+                c.commit();
+            } catch (SQLException | RuntimeException ex) {
+                c.rollback();
+                throw ex;
             }
         } catch (SQLException e) {
             throw new RuntimeException("Không thể cập nhật thông tin thú cưng", e);
+        }
+    }
+
+    private void saveCare(Connection c, Pet p) throws SQLException {
+        CareProfile care = p.getCareProfile();
+        if (care == null)
+            care = new CareProfile(
+                    0,
+                    p.getType() == PetType.DOG ? 60 : 20,
+                    "Feed twice daily",
+                    "Routine veterinary review");
+        p.setCareProfile(care);
+        try (PreparedStatement q = c.prepareStatement(
+                "INSERT INTO care_profiles(pet_id,daily_exercise_minutes,feeding_notes,medical_notes)"
+                        + " VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE"
+                        + " daily_exercise_minutes=VALUES(daily_exercise_minutes),feeding_notes=VALUES(feeding_notes),medical_notes=VALUES(medical_notes)")) {
+            q.setLong(1, p.getId());
+            q.setInt(2, care.getDailyExerciseMinutes());
+            q.setString(3, care.getFeedingNotes());
+            q.setString(4, care.getMedicalNotes());
+            q.executeUpdate();
         }
     }
 
@@ -143,12 +202,13 @@ public class JdbcPetRepository implements PetRepository {
     public void delete(long id) {
         String sql = "DELETE FROM pets WHERE pet_id = ?";
         try (Connection c = DatabaseConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            
+                PreparedStatement ps = c.prepareStatement(sql)) {
+
             ps.setLong(1, id);
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Không thể xóa thú cưng. Thú cưng này có thể đang liên kết với đơn đăng ký.", e);
+            throw new RuntimeException(
+                    "Không thể xóa thú cưng. Thú cưng này có thể đang liên kết với đơn đăng ký.", e);
         }
     }
 }

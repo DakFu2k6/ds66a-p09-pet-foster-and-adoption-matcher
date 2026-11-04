@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.petmatch</groupId>
     <artifactId>pet-adoption-matcher</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0</version>
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

@@ -13,7 +13,13 @@ public class Placement {
     public Placement() {
     }
 
-    public Placement(long id, long applicationId, long petId, long familyId, LocalDateTime placementDate, String status) {
+    public Placement(
+            long id,
+            long applicationId,
+            long petId,
+            long familyId,
+            LocalDateTime placementDate,
+            String status) {
         this.id = id;
         this.applicationId = applicationId;
         this.petId = petId;

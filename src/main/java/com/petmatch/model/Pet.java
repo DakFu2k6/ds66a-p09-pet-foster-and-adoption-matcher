@@ -12,9 +12,17 @@ public abstract class Pet {
     private PetStatus status;
     private CareProfile careProfile;
 
-    protected Pet(long id, String name, String breed, int ageMonths, String healthStatus,
-            String temperament, boolean specialCareRequired, String housingRequirement,
-            PetStatus status, CareProfile careProfile) {
+    protected Pet(
+            long id,
+            String name,
+            String breed,
+            int ageMonths,
+            String healthStatus,
+            String temperament,
+            boolean specialCareRequired,
+            String housingRequirement,
+            PetStatus status,
+            CareProfile careProfile) {
         this.id = id;
         this.name = name;
         this.breed = breed;
@@ -30,6 +38,8 @@ public abstract class Pet {
     public abstract String getCareDescription();
 
     public abstract PetType getType();
+
+    public abstract ExperienceLevel requiredExperience();
 
     public long getId() {
         return id;

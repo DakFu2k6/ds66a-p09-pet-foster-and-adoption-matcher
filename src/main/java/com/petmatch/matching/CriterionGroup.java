@@ -1,34 +1,34 @@
 package com.petmatch.matching;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.petmatch.model.FosterFamily;
 import com.petmatch.model.MatchOperator;
 import com.petmatch.model.Pet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CriterionGroup implements MatchCriterion {
     private final List<MatchCriterion> criteria = new ArrayList<>();
     private MatchOperator operator = MatchOperator.AND;
 
-    public CriterionGroup() {}
+    public CriterionGroup() {
+    }
 
     public CriterionGroup(MatchOperator operator) {
-        this.operator = operator;
+        this.operator = java.util.Objects.requireNonNull(operator);
     }
 
     public void addCriterion(MatchCriterion criterion) {
-        this.criteria.add(criterion);
+        this.criteria.add(java.util.Objects.requireNonNull(criterion));
     }
 
     public void setOperator(MatchOperator operator) {
-        this.operator = operator;
+        this.operator = java.util.Objects.requireNonNull(operator);
     }
 
     @Override
     public CriterionResult evaluate(Pet pet, FosterFamily family) {
         if (criteria.isEmpty()) {
-            return CriterionResult.pass("Không có tiêu chí nào được thiết lập.");
+            return CriterionResult.fail("No criteria configured.");
         }
 
         StringBuilder details = new StringBuilder();
@@ -36,7 +36,10 @@ public class CriterionGroup implements MatchCriterion {
 
         for (MatchCriterion criterion : criteria) {
             CriterionResult result = criterion.evaluate(pet, family);
-            details.append("- ").append(result.getReason()).append("\n");
+            details
+                    .append(result.isSatisfied() ? "[PASS] " : "[FAIL] ")
+                    .append(result.getReason())
+                    .append("\n");
 
             if (operator == MatchOperator.AND) {
                 if (!result.isSatisfied()) {
@@ -50,9 +53,11 @@ public class CriterionGroup implements MatchCriterion {
         }
 
         if (overallResult) {
-            return CriterionResult.pass("ĐÁNH GIÁ CHUNG: ĐẠT (Logic " + operator + ")\n" + details.toString());
+            return CriterionResult.pass(
+                    "ĐÁNH GIÁ CHUNG: ĐẠT (Logic " + operator + ")\n" + details.toString());
         } else {
-            return CriterionResult.fail("ĐÁNH GIÁ CHUNG: KHÔNG ĐẠT (Logic " + operator + ")\n" + details.toString());
+            return CriterionResult.fail(
+                    "ĐÁNH GIÁ CHUNG: KHÔNG ĐẠT (Logic " + operator + ")\n" + details.toString());
         }
     }
 }

@@ -1,12 +1,11 @@
 package com.petmatch.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
 import com.petmatch.exception.InvalidPetException;
 import com.petmatch.model.Pet;
 import com.petmatch.repository.PetRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class PetService {
     private final PetRepository repository;
@@ -26,7 +25,8 @@ public class PetService {
     public Pet save(Pet pet) {
         if (pet == null)
             throw new InvalidPetException("Pet is required.");
-        if (pet.getStatus() == null || pet.getHousingRequirement() == null
+        if (pet.getStatus() == null
+                || pet.getHousingRequirement() == null
                 || !Set.of("ANY", "HOUSE", "APARTMENT", "YARD").contains(pet.getHousingRequirement()))
             throw new InvalidPetException("Valid status and housing requirement are required.");
         if (pet.getName() == null || pet.getName().isBlank())
@@ -37,7 +37,17 @@ public class PetService {
             throw new InvalidPetException("Name is too long.");
         if (pet.getCareProfile() != null && pet.getCareProfile().getDailyExerciseMinutes() < 0)
             throw new InvalidPetException("Exercise cannot be negative.");
-        
+
+        if (pet.getHealthStatus() == null
+                || pet.getHealthStatus().isBlank()
+                || pet.getHealthStatus().length() > 30
+                || pet.getTemperament() == null
+                || pet.getTemperament().isBlank()
+                || pet.getTemperament().length() > 30
+                || (pet.getBreed() != null && pet.getBreed().length() > 100))
+            throw new InvalidPetException("Health, temperament and breed lengths are invalid.");
+        if (pet.getStatus() == com.petmatch.model.PetStatus.PLACED)
+            throw new InvalidPetException("Committed pets cannot be edited or registered as placed.");
         if (pet.getId() > 0) {
             repository.update(pet);
             return pet;

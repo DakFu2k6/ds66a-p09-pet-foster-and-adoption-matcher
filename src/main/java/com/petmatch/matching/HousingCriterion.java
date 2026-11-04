@@ -1,20 +1,27 @@
 package com.petmatch.matching;
 
-import com.petmatch.model.FosterFamily;
-import com.petmatch.model.Pet;
+import com.petmatch.model.*;
 
 public class HousingCriterion implements MatchCriterion {
-
-    @Override
     public CriterionResult evaluate(Pet pet, FosterFamily family) {
-        if (family == null) {
-            return CriterionResult.fail("Thiếu thông tin điều kiện nhà ở của gia đình.");
-        }
-
-        if (family.getHousingType() != null) {
-            return CriterionResult.pass("Điều kiện nhà ở phù hợp: " + family.getHousingType());
-        }
-
-        return CriterionResult.fail("Gia đình chưa đăng ký loại hình nhà ở.");
+        if (pet == null || family == null || family.getHousingType() == null)
+            return CriterionResult.fail("Housing: missing data");
+        boolean ok = switch (pet.getHousingRequirement() == null ? "" : pet.getHousingRequirement()) {
+            case "ANY" -> true;
+            case "HOUSE" ->
+                family.getHousingType() == com.petmatch.model.HousingType.HOUSE
+                        || family.getHousingType() == com.petmatch.model.HousingType.FARM;
+            case "APARTMENT" -> family.getHousingType() == com.petmatch.model.HousingType.APARTMENT;
+            case "YARD" -> family.isHasYard();
+            default -> false;
+        };
+        return new CriterionResult(
+                ok,
+                "Housing: requires "
+                        + pet.getHousingRequirement()
+                        + "; family "
+                        + family.getHousingType()
+                        + ", yard="
+                        + family.isHasYard());
     }
 }

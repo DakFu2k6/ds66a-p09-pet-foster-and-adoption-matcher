@@ -1,9 +1,8 @@
 package com.petmatch.repository;
 
+import com.petmatch.model.AdoptionApplication;
 import java.util.List;
 import java.util.Optional;
-
-import com.petmatch.model.AdoptionApplication;
 
 public interface ApplicationRepository {
     AdoptionApplication save(long petId, long familyId, String status);

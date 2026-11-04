@@ -20,8 +20,7 @@ public final class DatabaseConnection {
 
     private static Properties loadProperties() {
         Properties p = new Properties();
-        try (InputStream in = DatabaseConnection.class.getClassLoader()
-                .getResourceAsStream("application.properties")) {
+        try (InputStream in = DatabaseConnection.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (in != null)
                 p.load(in);
         } catch (Exception ex) {
@@ -37,13 +36,13 @@ public final class DatabaseConnection {
             return map;
         try {
             for (String line : Files.readAllLines(file)) {
-                String s = line.trim();
+                String s = line.replace("\uFEFF", "").trim();
                 if (s.isEmpty() || s.startsWith("#") || !s.contains("="))
                     continue;
                 int i = s.indexOf('=');
                 String v = s.substring(i + 1).trim();
-                if (v.length() >= 2 && ((v.startsWith("\"") && v.endsWith("\""))
-                        || (v.startsWith("'") && v.endsWith("'"))))
+                if (v.length() >= 2
+                        && ((v.startsWith("\"") && v.endsWith("\"")) || (v.startsWith("'") && v.endsWith("'"))))
                     v = v.substring(1, v.length() - 1);
                 map.put(s.substring(0, i).trim(), v);
             }
@@ -70,7 +69,12 @@ public final class DatabaseConnection {
         } catch (NumberFormatException e) {
             throw new SQLException("DB_PORT must be 1..65535.");
         }
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + name
+        String url = "jdbc:mysql://"
+                + (host.equals("::1") ? "[::1]" : host)
+                + ":"
+                + port
+                + "/"
+                + name
                 + "?sslMode=DISABLED&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=15000"
                 + "&serverTimezone=Asia/Ho_Chi_Minh&characterEncoding=UTF-8";
         return DriverManager.getConnection(url, user, password);

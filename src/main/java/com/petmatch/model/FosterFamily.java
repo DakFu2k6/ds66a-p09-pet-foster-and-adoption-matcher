@@ -1,4 +1,5 @@
 package com.petmatch.model;
+
 public class FosterFamily {
     private long id;
     private String familyName, contactName, phone;
@@ -10,9 +11,18 @@ public class FosterFamily {
     public FosterFamily() {
     }
 
-    public FosterFamily(long id, String familyName, String contactName, String phone,
-            HousingType housingType, ExperienceLevel experienceLevel, int capacity,
-            int activePetCount, boolean hasYard, boolean hasChildren, boolean active) {
+    public FosterFamily(
+            long id,
+            String familyName,
+            String contactName,
+            String phone,
+            HousingType housingType,
+            ExperienceLevel experienceLevel,
+            int capacity,
+            int activePetCount,
+            boolean hasYard,
+            boolean hasChildren,
+            boolean active) {
         this.id = id;
         this.familyName = familyName;
         this.contactName = contactName;

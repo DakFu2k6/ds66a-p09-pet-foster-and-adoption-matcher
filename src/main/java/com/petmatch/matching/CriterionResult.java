@@ -1,8 +1,8 @@
 package com.petmatch.matching;
 
 public class CriterionResult {
-    private final boolean satisfied; 
-    private final String reason;     
+    private final boolean satisfied;
+    private final String reason;
 
     public CriterionResult(boolean satisfied, String reason) {
         this.satisfied = satisfied;
