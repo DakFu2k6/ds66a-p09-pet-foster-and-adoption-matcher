@@ -168,12 +168,6 @@ Trong môi trường sửa mã:
 - Không khẳng định SQL/migration/khóa đồng thời/login JDBC đã chạy thành công trên MySQL 8.4 thực. Cũng chưa xác minh trực quan các cửa sổ Swing trên máy có màn hình; cần smoke test trên Windows của bạn.
 - Kiểm tra từng màn hình với dữ liệu mẫu để xác nhận kích thước font và bố cục theo DPI máy bạn. Dữ liệu được đọc đồng bộ trên một số tab; với dữ liệu lớn hoặc database phản hồi chậm, cần chuyển các tác vụ đó sang SwingWorker như màn đăng nhập.
 
-Xem kết quả thực tế trong `verification/`. Lệnh kiểm thử trên máy bạn:
-
-```powershell
-mvn clean test
-.\.venv\Scripts\python.exe -m unittest discover -s scripts -p "test_*.py" -v
-```
 
 Để chạy 6 test MySQL, tạo database riêng có hậu tố `_test`. Không dùng database đồ án chính:
 
